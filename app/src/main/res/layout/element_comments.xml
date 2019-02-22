@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_marginLeft="5dp"
+    android:layout_marginRight="5dp"
+    android:layout_marginBottom="10dp">
+<RelativeLayout
+xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+android:layout_height="wrap_content"
+    android:padding="5dp">
+<de.hdodenhof.circleimageview.CircleImageView
+    android:id="@+id/iv_user_comments"
+    android:layout_width="45dp"
+    android:layout_height="45dp"
+    android:src="@drawable/test"
+    android:layout_marginLeft="10dp"
+    android:layout_marginTop="13dp"
+
+    />
+<TextView
+    android:id="@+id/tv_nameOfUser_comments"
+    android:layout_width="wrap_content"
+    android:layout_height="34dp"
+    android:layout_toRightOf="@id/iv_user_comments"
+    android:text="Hà Xuân Sáng"
+    android:gravity="center_vertical"
+    android:layout_marginLeft="20dp"
+    android:textSize="15sp"
+    android:layout_marginTop="5dp"
+    android:textStyle="bold"
+    android:textColor="@color/black"
+
+    />
+<TextView
+    android:id="@+id/tv_content_comments"
+    android:layout_below="@id/tv_nameOfUser_comments"
+    android:layout_toRightOf="@id/iv_user_comments"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Bài post này thật thú vị quá đi mà . "
+    android:layout_marginLeft="20dp"
+    android:textSize="15sp"
+    />
+</RelativeLayout>
+</android.support.v7.widget.CardView>

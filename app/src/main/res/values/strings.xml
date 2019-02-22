@@ -1,0 +1,46 @@
+<resources>
+    <string name="app_name">Bitdimo</string>
+    <string name="title_outstanding">Nổi bật</string>
+    <string name="title_explore">Khám Phá</string>
+    <string name="title_add">Đăng</string>
+    <string name="title_manage">Quản Lý</string>
+    <string name="title_information">Thông tin</string>
+    <string name="login_username">Tên Đăng Nhập</string>
+    <string name="login_password">Mật khẩu</string>
+    <string name="login_screen">Đăng Nhập</string>
+    <string name="login_warning">Oops! Bạn vừa mất kết nối</string>
+    <string name="login_forgorpassword">Quên mật khẩu?</string>
+    <string name="login_save">Lưu mật khẩu</string>
+    <string name="sign_up">CHƯA PHẢI LÀ THÀNH VIÊN? ĐĂNG KÝ NGAY</string>
+    <string-array name="listcity">
+        <item> Đà Nẵng </item>
+        <item>Thành Phố Hồ Chí Minh </item>
+        <item>Hà Nội</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="register_password">Nhập mật khẩu</string>
+    <string name="edit_password">Nhập mật khẩu</string>
+    <string name="register_password_verify">Nhập lại mật khẩu mới</string>
+    <string name="edit_password_verify">Nhập lại mật khẩu mới</string>
+    <string name="terms_conditions">Đồng ý với những điều khoản của Bitdimo</string>
+    <string name="already_user">Đã có tài khoản,hãy đăng nhập.</string>
+    <string name="title_activity_edit">EditActivity</string>
+    <string name="error_gif">x or y bound size should be at least %1$dpx and file size should be no more than %2$sM</string>
+
+    <string name="selector_folder_all">All Images</string>
+    <string name="selector_caption">Select Images</string>
+    <!--http://stackoverflow.com/questions/17502824/whats-wrong-with-this-format-string-->
+    <string name="selector_action_done">Done (%1$d/%2$d)</string>
+    <string name="selector_preview">Preview</string>
+
+    <string name="selector_reach_max_image_hint">You have selected %d images already!</string>
+    <string name="tip_take_photo">Take Photo</string>
+    <string name="msg_no_camera">Can\'t Launch Camera!</string>
+    <string name="camera_temp_file_error">Temp File Error!</string>
+
+    <string name="selector_permission_error">Permission rejected，failed to work properly！</string>
+    <string name="title_activity_maps">Map</string>
+
+</resources>

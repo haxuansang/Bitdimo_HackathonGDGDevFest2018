@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_margin="10dp"
+    android:id="@+id/cv_outstanding"
+
+    >
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="8dp"
+
+       >
+        <TextView
+            android:id="@+id/nameOfPlace"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cầu Rồng  (Dragon Bridge)"
+            android:textSize="18sp"
+            android:textColor="@color/colorPrimaryDark"
+            android:layout_marginLeft="10dp"
+            />
+        <TextView
+            android:layout_below="@id/nameOfPlace"
+            android:id="@+id/addressOfPlace"
+            android:layout_width="match_parent"
+            android:layout_marginEnd="45dp"
+            android:layout_height="wrap_content"
+            android:text="Địa Điểm: Sơn Trà, Đà Nẵng, Việt Nam"
+            android:layout_marginTop="7dp"
+            android:textStyle="bold|italic"
+            android:layout_marginStart="10dp"
+            />
+
+        <ImageButton
+            android:id="@+id/imb_location"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_below="@id/nameOfPlace"
+            android:layout_marginTop="7dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_outstanding" />
+        <TextView
+            android:layout_toRightOf="@id/imb_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=""/>
+
+        <com.daimajia.slider.library.SliderLayout
+            android:id="@+id/iv_pictureOfPlace"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_below="@id/imb_location"
+            android:layout_marginTop="13dp"
+            >
+
+        </com.daimajia.slider.library.SliderLayout>
+        <RelativeLayout
+            android:layout_below="@id/iv_pictureOfPlace"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            >
+            <ImageView
+                android:id="@+id/iv_countsOfLikes"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="@drawable/ic_love_new"
+                android:layout_marginLeft="20dp"
+              />
+            <TextView
+                android:id="@+id/tv_countsOfLikes"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="123"
+                android:layout_toRightOf="@id/iv_countsOfLikes"
+                android:layout_marginLeft="10dp"/>
+            <RelativeLayout
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+
+                >
+                <ImageView
+                    android:id="@+id/imv_OfComments"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:background="@drawable/ic_comments_new"
+                    android:layout_centerHorizontal="true"
+                    android:layout_toLeftOf="@id/tv_countsOfComments"
+                    />
+
+                <TextView
+                    android:id="@+id/tv_countsOfComments"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="123"
+                    android:layout_marginLeft="10dp"
+                    android:layout_centerHorizontal="true"
+                    />
+            </RelativeLayout>
+
+            <Button
+                android:layout_marginRight="-10dp"
+                android:id="@+id/ib_bookmark"
+                android:layout_width="80dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="0dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:drawableLeft="@drawable/ic_bookmark"
+                android:drawablePadding="-28dp"
+                android:text="Lưu"
+                android:textAllCaps="false"
+                android:gravity="center"
+                android:paddingEnd="-10dp"
+                android:textColor="#808080"
+                />
+
+
+
+        </RelativeLayout>
+    </RelativeLayout>
+</android.support.v7.widget.CardView>

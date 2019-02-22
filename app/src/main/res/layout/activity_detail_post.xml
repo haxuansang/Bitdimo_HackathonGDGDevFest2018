@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:padding="5dp"
+    android:orientation="vertical">
+    <ImageView
+        android:id="@+id/imv_transition"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:layout_marginTop="71dp"
+        android:visibility="visible"
+        />
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/rv_post_detail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="50dp">
+    </android.support.v7.widget.RecyclerView>
+    <EditText
+        android:id="@+id/content_comment"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="10dp"
+        android:hint="Nhập bình luận của bạn"
+        android:background="@drawable/shape_button"
+        android:layout_marginEnd="57dp"
+        android:paddingLeft="20dp"
+        />
+    <ImageButton
+        android:id="@+id/sendComment"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="7dp"
+        app:srcCompat="@drawable/ic_send_black_24dp"
+        android:background="@drawable/shapesend"
+        android:layout_marginBottom="5dp"
+
+        />
+
+
+</RelativeLayout>
+
+

@@ -1,0 +1,79 @@
+<android.support.design.widget.CoordinatorLayout android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.appproteam.sangha.bitdimo.MapsActivity">
+<RelativeLayout android:layout_height="match_parent"
+    android:layout_width="match_parent"
+    android:animateLayoutChanges="true">
+    <android.support.v7.widget.CardView
+        android:id="@+id/cardview_title"
+        android:layout_width="match_parent"
+        android:layout_height="60dp">
+        <LinearLayout
+
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:weightSum="10">
+            <EditText
+                android:id="@+id/edt_placename"
+                android:layout_weight="8"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:maxLines="2"
+                android:gravity="center_vertical"
+                android:textColor="@drawable/edittextdisable"
+
+                />
+            <Button
+                android:id="@+id/btn_submit_map"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="2"
+                android:text="Dẫn đường"
+                android:textColor="@color/white"
+                android:background="@color/colorPrimaryDark"
+                android:textSize="14sp"
+                android:textAllCaps="true"/>
+        </LinearLayout>
+    </android.support.v7.widget.CardView>
+<fragment
+    android:id="@+id/map"
+    android:name="com.google.android.gms.maps.SupportMapFragment"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@id/cardview_title"
+    />
+    <Button
+        android:id="@+id/btn_getCurrentLocation"
+        android:visibility="gone"
+        android:layout_width="200dp"
+        android:layout_height="30dp"
+        android:layout_alignParentBottom="true"
+        android:layout_centerInParent="true"
+        android:layout_marginBottom="20dp"
+        android:text="Lấy vị trí hiện tại của bạn"
+        android:textSize="9.5sp"
+        android:textColor="@color/colorPrimaryDark"
+        android:background="@drawable/shapebutton_currentplace"
+        />
+    <ImageButton
+        android:visibility="gone"
+        android:id="@+id/choice_street"
+        android:layout_width="37dp"
+        android:layout_height="37dp"
+        android:src="@drawable/ic_map"
+        android:layout_below="@id/cardview_title"
+        android:background="@color/white"
+        android:layout_alignParentEnd="true"
+        android:layout_marginRight="13.5dp"
+        android:layout_marginTop="70dp"
+
+        android:alpha="0.8"
+        />
+
+</RelativeLayout>
+    <include layout="@layout/bottom_sheet_layout_element"/>
+</android.support.design.widget.CoordinatorLayout>

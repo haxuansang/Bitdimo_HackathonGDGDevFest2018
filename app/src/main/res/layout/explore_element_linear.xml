@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.CardView
+    android:id="@+id/cv_post"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_marginLeft="10dp"
+    android:layout_marginRight="10dp"
+    android:layout_marginBottom="20dp"
+    android:padding="5dp"
+    android:clickable="true">
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/iv_user"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="13dp"
+            android:src="@drawable/test"
+            />
+
+        <TextView
+            android:id="@+id/tv_nameOfUser"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="5dp"
+            android:layout_toRightOf="@id/iv_user"
+            android:gravity="center_vertical"
+            android:text="Hà Xuân Sáng"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimaryDark"
+
+            />
+
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:layout_marginLeft="20dp"
+            android:layout_toRightOf="@id/tv_nameOfUser"
+            android:text="11/02/2018 15h30"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            android:layout_marginTop="15dp"
+
+
+            />
+
+        <!--  <TextView
+        android:id="@+id/location_post"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxLines="2"
+        android:layout_below="@id/tv_time"
+        android:text="Địa điểm :"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="5dp"
+        android:textStyle="bold"
+        android:textColor="@color/colorPrimaryDark"
+        />-->
+        <ImageButton
+            android:id="@+id/ib_maps_linear"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_below="@id/tv_nameOfUser"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="10dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_outstanding"
+            android:layout_marginTop="-5dp"            />
+
+        <TextView
+            android:id="@+id/tv_detail_location_post"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_nameOfUser"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="30dp"
+            android:layout_toRightOf="@id/iv_user"
+            android:maxLines="2"
+            android:text="Kiệt 82, Nguyễn Lương Bằng, Liển Chiểu"
+
+            android:textStyle="bold" />
+
+        <com.daimajia.slider.library.SliderLayout
+            android:id="@+id/slideImage"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_below="@id/tv_detail_location_post"
+            android:layout_marginTop="13dp"
+           >
+
+        </com.daimajia.slider.library.SliderLayout>
+
+        <com.borjabravo.readmoretextview.ReadMoreTextView
+            android:id="@+id/description_readmore"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/slideImage"
+            android:layout_marginLeft="20dp"
+            android:layout_marginTop="25dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="10dp"
+            android:maxLines="2"
+            android:text="  Thật tuyệt vời khi đến nơi đây, mọi thứ diễn ra là quá tuyệt vời đối với ta"
+            android:textColor="@android:color/black"
+            app:trimMode="trimModeLine"
+            android:layout_centerHorizontal="true"
+            android:textSize="16sp"
+        />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/description_readmore"
+            android:layout_marginTop="10dp">
+
+            <ImageView
+                android:id="@+id/iv_countsOfLikes_linear"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginLeft="20dp"
+                android:background="@drawable/ic_love_new" />
+
+            <TextView
+                android:id="@+id/tv_countsOfLikes_linear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_toRightOf="@id/iv_countsOfLikes_linear"
+                android:text="123" />
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                android:gravity="center">
+
+                <ImageView
+                    android:id="@+id/imv_OfComments_linear"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_toLeftOf="@id/tv_countsOfComments_linear"
+                    android:background="@drawable/ic_comments_new" />
+
+                <TextView
+                    android:id="@+id/tv_countsOfComments_linear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginLeft="10dp"
+                    android:text="123" />
+            </RelativeLayout>
+
+            <Button
+                android:id="@+id/ib_bookmark_linear"
+                android:layout_width="80dp"
+                android:layout_height="20dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginTop="0dp"
+                android:layout_marginRight="-10dp"
+                android:layout_marginBottom="0dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:drawableLeft="@drawable/ic_bookmark"
+                android:drawablePadding="-28dp"
+                android:gravity="center"
+                android:paddingEnd="-10dp"
+                android:text="Lưu"
+                android:textAllCaps="false"
+                android:textColor="#808080"
+
+                />
+
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+</android.support.v7.widget.CardView>
