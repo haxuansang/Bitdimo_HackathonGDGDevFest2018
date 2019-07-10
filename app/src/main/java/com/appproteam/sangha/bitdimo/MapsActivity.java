@@ -50,7 +50,6 @@ import com.directions.route.Route;
 import com.directions.route.RouteException;
 import com.directions.route.Routing;
 import com.directions.route.RoutingListener;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -63,14 +62,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.maps.DirectionsApi;
 import com.google.maps.GeoApiContext;
-import com.google.maps.errors.ApiException;
+import com.google.maps.android.PolyUtil;
 import com.google.maps.model.DirectionsResult;
-import com.google.maps.model.TravelMode;
-
-
-
 
 
 import java.io.IOException;
@@ -83,6 +77,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     LocationManager locationManager;
     private GoogleMap mMap;
     private List<Polyline> polylines;
+    private List<LatLng> listGPSTracking;
     private static final int LOCATION_REQUEST_CODE = 101;
     SupportMapFragment mapFragment;
     public static Marker  currentMarker;
@@ -111,20 +106,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+        fakeGPS();
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST_CODE);
             return;
         }
-
         geoApiContext= new GeoApiContext.Builder().apiKey(getString(R.string.google_api_key)).build();
-
         btn_submit=(Button)findViewById(R.id.btn_submit_map);
         btn_submit.setOnClickListener(this);
         btn_getCurentLocation=(Button)findViewById(R.id.btn_getCurrentLocation);
         btn_getCurentLocation.setOnClickListener(this);
         editTextPlace=(EditText)findViewById(R.id.edt_placename);
         btn_choice_view=(ImageButton)findViewById(R.id.choice_street);
-
         editTextPlace.setClickable(false);
         editTextPlace.addTextChangedListener(new TextWatcher() {
             @Override
@@ -148,15 +141,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         typeOfView=mapIntent.getIntExtra("typeofview",0);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-
-
-         mapFragment= (SupportMapFragment) getSupportFragmentManager()
+        mapFragment= (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
 
 
+    }
+
+    private void fakeGPS() {
     }
 
 
@@ -194,8 +188,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-
         if (location == null) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 10, this);
         } else {
@@ -234,7 +226,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.getUiSettings().setMyLocationButtonEnabled(true);
 
         statusCheck();
-
         if (typeOfView == 1)
         mMap.setOnMapClickListener(this);
         mMap.setOnMyLocationClickListener(this);
@@ -427,8 +418,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private void addPolyline(DirectionsResult results, GoogleMap mMap) {
-       /* List<LatLng> decodedPath = PolyUtil.decode(results.routes[0].overviewPolyline.getEncodedPath());
-        mMap.addPolyline(new PolylineOptions().addAll(decodedPath));*/
+        List<LatLng> decodedPath = PolyUtil.decode(results.routes[0].overviewPolyline.getEncodedPath());
+        mMap.addPolyline(new PolylineOptions().addAll(decodedPath));
     }
 
     private void searchPlaceName(String placeNameToSearch) {
@@ -478,9 +469,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         List<RoadObject> listRoadObjects = new ArrayList<>();
 
-
-
-        //
         bottomSheetDialog = (LinearLayout)findViewById(R.id.bottom_sheet);
         bottomSheetBehavior = BottomSheetBehavior.from(bottomSheetDialog);
         bottomSheetBehavior.setHideable(true);

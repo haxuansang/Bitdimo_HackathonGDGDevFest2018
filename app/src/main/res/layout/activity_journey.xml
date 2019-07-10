@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@id/button"
+        android:orientation="vertical"
+        android:weightSum="2">
+
+        <com.google.android.exoplayer2.ui.PlayerView
+            app:resize_mode="fixed_height"
+            android:id="@+id/myVideo"
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.8" />
+
+        <fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1.2"
+            android:layout_below="@id/cardview_title" />
+    </LinearLayout>
+
+    <!--
+
+        <SeekBar
+            android:id="@+id/seekbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/myVideo"
+            android:layout_marginTop="20dp"
+            android:layout_toRightOf="@id/runningTime" />
+
+        <ImageView
+            android:id="@+id/controlVideo"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_below="@id/myVideo"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/ic_play"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="10dp"/>
+        <TextView
+            android:id="@+id/runningTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/myVideo"
+            android:layout_marginTop="20dp"
+            android:layout_toRightOf="@id/controlVideo"
+            android:text="00:00"
+            android:textColor="@android:color/black"
+            android:textSize="16dp"
+            android:layout_marginLeft="10dp"/>
+    -->
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="10dp"
+        android:text="Choose"
+        android:visibility="gone" />
+</RelativeLayout>
