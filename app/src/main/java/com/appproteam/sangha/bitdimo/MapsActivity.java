@@ -361,13 +361,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         {
             case R.id.btn_getCurrentLocation:
                 if(btn_getCurentLocation.getVisibility()==View.VISIBLE)
-                {
-
-                    btn_getCurentLocation.setVisibility(View.GONE);
+                {   btn_getCurentLocation.setVisibility(View.GONE);
                     AddToMap(location);
                     animateCameraMap(this.currentLocation);
                     btn_submit.setText("Chọn");
-
                 }
                 break;
             case R.id.btn_submit_map:
