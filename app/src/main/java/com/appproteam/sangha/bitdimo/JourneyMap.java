@@ -484,7 +484,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
         MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title(currentPlace);
         currentMarker = mMap.addMarker(markerOptions);
-        currentMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.car));
+        currentMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker));
 
 //        editTextPlace.setText(getPlacename(location));
 
@@ -616,7 +616,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
             //In case of more than 5 alternative routes
 
             PolylineOptions polyOptions = new PolylineOptions();
-            polyOptions.color(getResources().getColor(COLORS[3]));
+            polyOptions.color(getResources().getColor(COLORS[0]));
             polyOptions.width(10 + i * 3);
             polyOptions.addAll(list);
             mMap.addPolyline(polyOptions);
