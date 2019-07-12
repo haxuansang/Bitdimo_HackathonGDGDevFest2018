@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -43,6 +44,9 @@ import android.widget.MediaController;
 import android.widget.VideoView;
 
 import com.appproteam.sangha.bitdimo.Utils.MyLocation;
+import com.appproteam.sangha.bitdimo.Utils.ResizeBitmap;
+import com.appproteam.sangha.bitdimo.Utils.TemporaryObjects.GPSMarkerDetect;
+import com.appproteam.sangha.bitdimo.Utils.TemporaryObjects.GPSMarkerSingleton;
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
 import com.directions.route.RouteException;
@@ -107,7 +111,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private long playbackPosition = 0;
     SupportMapFragment mapFragment;
     GeoApiContext geoApiContext;
-    final String vidAddress = "https://r5---sn-ab5sznld.googlevideo.com/videoplayback?expire=1562852705&ei=AekmXYzDCqKR7gLxlprQCQ&ip=68.232.175.189&id=o-AEiBcgUsUIDq8V8KpYyaRoZ92lvxNxpbjvDUG-hwff19&itag=43&source=youtube&requiressl=yes&mm=31%2C29&mn=sn-ab5sznld%2Csn-ab5l6nzy&ms=au%2Crdu&mv=m&mvi=4&pl=25&initcwndbps=1200000&mime=video%2Fwebm&gir=yes&clen=166150114&ratebypass=yes&dur=0.000&lmt=1549756579715197&mt=1562831027&fvip=5&c=WEB&txp=5511222&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRQIgZtV3azndyAHqASZ2Zyz_nJZ5W9i0xdqQGhwkXOhHr60CIQC95FS2pLcBVNfc_2DvY7EzbK7YLADnn4tcu_sscsac5A%3D%3D&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRAIgTlhc_TxOSbP3RD35ZyMdPjtRnD_I___E3r-CwwLgvB8CIFcgD5J_loGBxMrV9rmtClyyagenyaP600A5_C5UCphA&video_id=DPbxkS7n4xA&title=V%C6%B0%E1%BB%A3t+%C4%90%C3%A8o+H%E1%BA%A3i+V%C3%A2n+%E2%96%B6+Tr%E1%BA%A3i+nghi%E1%BB%87m+%C4%91%C6%B0%E1%BB%9Dng+%C4%91%C3%A8o+nguy+hi%E1%BB%83m+d%E1%BB%85+nu%E1%BB%91t+m%E1%BA%A1ng+ng%C6%B0%E1%BB%9Di+nh%E1%BA%A5t+Vi%E1%BB%87t+Nam";
+    final String vidAddress = "https://firebasestorage.googleapis.com/v0/b/wegoapp-935c3.appspot.com/o/videos%2F111111.mp4?alt=media&token=6eab1849-d2dd-46f0-8370-e94d96362555";
     private SimpleExoPlayer player;
     LocationManager locationManager;
     private GoogleMap mMap;
@@ -134,8 +138,10 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     public static Location choosenLocation;
     Thread threadControl;
     volatile boolean activityStopped = false;
-    LatLng endPoint = new LatLng(16.142962, 108.121025);
-    public static int i=0;
+    LatLng endPoint = new LatLng(16.191078, 108.127618);
+    public int i=0;
+    public long lastPositionPlayer= 0 ;
+    public long beginPositionPlayer = 0;
 
 
     private static final int[] COLORS = new int[]{R.color.colorPrimaryDark, R.color.colorPrimary, R.color.primary_material_light_1, R.color.accent, R.color.primary_dark_material_light};
@@ -220,8 +226,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         player.prepare(mediaSource, true, false);
     }
 
-    private void drawPolyline(LatLng start) {
-
+    private void drawPolyline(LatLng start, LatLng endPoint) {
 
         Routing routing = new Routing.Builder().key("AIzaSyC1rU8F0fBtYFA3Vsj28v3w_025sLGHX0I")
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
@@ -371,8 +376,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         listFake.add( new LatLng(16.193273, 108.123280));
         listFake.add( new LatLng(16.192180, 108.126127));
         listFake.add( new LatLng(16.191078, 108.127618));
-
-
     }
 
 
@@ -381,24 +384,22 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         threadControl=new Thread(new Runnable() {
             public void run() {
                 do {
-                    if(!activityStopped)
+                    if(!activityStopped && player.getCurrentPosition()!=0 && i<listFake.size())
                     playerView.post(new Runnable() {
                         public void run() {
-                            if (i<listFake.size()) {
 
-                                Location location = new Location("");
-                                location.setLatitude(listFake.get(i).latitude);
-                                location.setLongitude(listFake.get(i).longitude);
-                                AddToMap(location);
+                                LatLng currentMarker = listFake.get(i);
+                                LatLng endMarker = listFake.get(i+1);
+                                if (player.getCurrentPosition()>0)
+                                beginPositionPlayer = lastPositionPlayer;
+                                lastPositionPlayer = player.getCurrentPosition();
+                                drawPolyline(currentMarker,endMarker);
                                 i++;
-                            }
-                            else  i=0;
-
-                            Log.e(TAG, "run: " + player.getCurrentPosition());
+                                 activityStopped=true;
                         }
                     });
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep(12000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -484,11 +485,9 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
         MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title(currentPlace);
         currentMarker = mMap.addMarker(markerOptions);
-        currentMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker));
-
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.carmarker);
+        currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(ResizeBitmap.getScaledDownBitmap(bitmap,170,true)));
 //        editTextPlace.setText(getPlacename(location));
-
-
     }
 
 
@@ -526,7 +525,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         }
 
         Log.d("sangha", "locationaaaa: " + location.getLongitude() + "\t" + location.getLatitude());
-        drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
+     //   drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
         locationManager.removeUpdates(this);
 
     }
@@ -563,8 +562,14 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     @Override
     public void onRoutingSuccess(ArrayList<Route> arrayList, int i) {
-        Toast.makeText(this, "aaaa", Toast.LENGTH_SHORT).show();
+        GPSMarkerDetect gpsMarkerDetect = new GPSMarkerDetect(beginPositionPlayer,lastPositionPlayer,arrayList.get(0).getPoints());
+      //  GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
         addPolylineGPS(arrayList.get(0).getPoints());
+        activityStopped= false;
+        Log.d(TAG, "chinh: "+ beginPositionPlayer +"\t" + lastPositionPlayer + "\t" +arrayList.get(0).getPoints().size());
+
+
+        //addPolylineGPS(arrayList.get(0).getPoints());
     }
 
     @Override
@@ -596,16 +601,23 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
             AddToMap(location);
 
         }*/
-        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
+/*        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
             @Override
             public void gotLocation(Location location){
                 Log.e(TAG, "gotLocation: "+ location.getLatitude() +"\t" + location.getLongitude() );
                 drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
-                animateCameraMap(location);
+
             }
         };
         MyLocation myLocation = new MyLocation();
         myLocation.getLocation(this, locationResult);
+        */
+        Location location = new Location("");
+        location.setLatitude(16.2003);
+        location.setLongitude(108.114);
+        animateCameraMap(location);
+
+       // drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
 
 
     }
@@ -614,7 +626,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
             int i=0;
             //In case of more than 5 alternative routes
-
             PolylineOptions polyOptions = new PolylineOptions();
             polyOptions.color(getResources().getColor(COLORS[0]));
             polyOptions.width(10 + i * 3);
@@ -624,7 +635,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     private void animateCameraMap(Location mLocation) {
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 20);
         mMap.animateCamera(cameraUpdate);
     }
 }
