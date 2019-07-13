@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
@@ -19,7 +20,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
+import android.provider.Telephony;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -43,6 +47,9 @@ import android.widget.MediaController;
 import android.widget.VideoView;
 
 import com.appproteam.sangha.bitdimo.Utils.MyLocation;
+import com.appproteam.sangha.bitdimo.Utils.ResizeBitmap;
+import com.appproteam.sangha.bitdimo.Utils.TemporaryObjects.GPSMarkerDetect;
+import com.appproteam.sangha.bitdimo.Utils.TemporaryObjects.GPSMarkerSingleton;
 import com.directions.route.AbstractRouting;
 import com.directions.route.Route;
 import com.directions.route.RouteException;
@@ -91,7 +98,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.locks.Lock;
 
 public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMyLocationClickListener, GoogleMap.OnMapClickListener, View.OnClickListener, RoutingListener {
     private static final String TAG = "sangha123";
@@ -107,7 +113,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private long playbackPosition = 0;
     SupportMapFragment mapFragment;
     GeoApiContext geoApiContext;
-    final String vidAddress = "https://r5---sn-ab5sznld.googlevideo.com/videoplayback?expire=1562852705&ei=AekmXYzDCqKR7gLxlprQCQ&ip=68.232.175.189&id=o-AEiBcgUsUIDq8V8KpYyaRoZ92lvxNxpbjvDUG-hwff19&itag=43&source=youtube&requiressl=yes&mm=31%2C29&mn=sn-ab5sznld%2Csn-ab5l6nzy&ms=au%2Crdu&mv=m&mvi=4&pl=25&initcwndbps=1200000&mime=video%2Fwebm&gir=yes&clen=166150114&ratebypass=yes&dur=0.000&lmt=1549756579715197&mt=1562831027&fvip=5&c=WEB&txp=5511222&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRQIgZtV3azndyAHqASZ2Zyz_nJZ5W9i0xdqQGhwkXOhHr60CIQC95FS2pLcBVNfc_2DvY7EzbK7YLADnn4tcu_sscsac5A%3D%3D&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRAIgTlhc_TxOSbP3RD35ZyMdPjtRnD_I___E3r-CwwLgvB8CIFcgD5J_loGBxMrV9rmtClyyagenyaP600A5_C5UCphA&video_id=DPbxkS7n4xA&title=V%C6%B0%E1%BB%A3t+%C4%90%C3%A8o+H%E1%BA%A3i+V%C3%A2n+%E2%96%B6+Tr%E1%BA%A3i+nghi%E1%BB%87m+%C4%91%C6%B0%E1%BB%9Dng+%C4%91%C3%A8o+nguy+hi%E1%BB%83m+d%E1%BB%85+nu%E1%BB%91t+m%E1%BA%A1ng+ng%C6%B0%E1%BB%9Di+nh%E1%BA%A5t+Vi%E1%BB%87t+Nam";
+    final String vidAddress = "https://r5---sn-n4v7knll.googlevideo.com/videoplayback?expire=1563027182&ei=jpIpXajoB8G2kwa_iLWoCw&ip=69.147.248.110&id=o-AFj0jBA8mOllgTKI9iZ3RFE88zKb6Hf4tcy5vzgasrLv&itag=43&source=youtube&requiressl=yes&mm=31%2C26&mn=sn-n4v7knll%2Csn-a5meknl6&ms=au%2Conr&mv=m&mvi=4&pl=23&initcwndbps=12923750&mime=video%2Fwebm&gir=yes&clen=166150114&ratebypass=yes&dur=0.000&lmt=1549756579715197&mt=1563005510&fvip=5&c=WEB&txp=5511222&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRAIgHV5xrrEfKHADhjjLnRsYZ7VKIjFXooIDbhriDJ2LtZoCIBlYcjCJEnQMj4ngFwLG2TM1p6cCoxxL1Tftvoimge22&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRQIhAKEKSKGA7Gda9ENBA6N6m8BJFG6b_gXF-kcSXh1ImGXvAiBsUSpycm6yOPkiBXHWTCKFh8_Xj-tvYo0MOa0SoviHUQ%3D%3D&video_id=DPbxkS7n4xA&title=V%C6%B0%E1%BB%A3t+%C4%90%C3%A8o+H%E1%BA%A3i+V%C3%A2n+%E2%96%B6+Tr%E1%BA%A3i+nghi%E1%BB%87m+%C4%91%C6%B0%E1%BB%9Dng+%C4%91%C3%A8o+nguy+hi%E1%BB%83m+d%E1%BB%85+nu%E1%BB%91t+m%E1%BA%A1ng+ng%C6%B0%E1%BB%9Di+nh%E1%BA%A5t+Vi%E1%BB%87t+Nam";
     private SimpleExoPlayer player;
     LocationManager locationManager;
     private GoogleMap mMap;
@@ -121,7 +127,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private Location currentLocation;
     private String currentPlaceName;
     private boolean isFirst = true;
-    private List<LatLng> listFake= new ArrayList<>();
+    private List<LatLng> listFake = new ArrayList<>();
     Location location;
     private Intent mapIntent;
     private String placeNameToSearch;
@@ -134,8 +140,14 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     public static Location choosenLocation;
     Thread threadControl;
     volatile boolean activityStopped = false;
-    LatLng endPoint = new LatLng(16.142962, 108.121025);
-    public static int i=0;
+    LatLng endPoint = new LatLng(16.191078, 108.127618);
+    public int i = 0;
+    public long lastPositionPlayer = 0;
+    public long beginPositionPlayer = 0;
+    public boolean isStoppedThreadGetRoute = false;
+    public LatLng mainLocation;
+    int counta =0;
+    long timedelaya=0;
 
 
     private static final int[] COLORS = new int[]{R.color.colorPrimaryDark, R.color.colorPrimary, R.color.primary_material_light_1, R.color.accent, R.color.primary_dark_material_light};
@@ -172,12 +184,15 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
                 if (playbackState == ExoPlayer.STATE_ENDED) {
                     Log.e(TAG, "onPlayerStateChanged: 1");
-                    Toast.makeText(getApplicationContext(), "Playback ended", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Bike is running", Toast.LENGTH_LONG).show();
+                    bikeRunning();
+                    player.seekTo(0);
+                    player.setPlayWhenReady(true);
+
                 } else if (playbackState == ExoPlayer.STATE_BUFFERING) {
                     Log.e(TAG, "onPlayerStateChanged: 2");
                     Toast.makeText(getApplicationContext(), "Buffering..", Toast.LENGTH_SHORT).show();
                 } else if (playbackState == ExoPlayer.STATE_READY) {
-
                     Log.e(TAG, "onPlayerStateChanged: 3");
                 }
             }
@@ -220,9 +235,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         player.prepare(mediaSource, true, false);
     }
 
-    private void drawPolyline(LatLng start) {
-
-
+    private void drawPolyline(LatLng start, LatLng endPoint) {
         Routing routing = new Routing.Builder().key("AIzaSyC1rU8F0fBtYFA3Vsj28v3w_025sLGHX0I")
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
                 .withListener(this)
@@ -244,7 +257,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     protected void onResume() {
         super.onResume();
         hideSystemUi();
-        activityStopped=false;
+        activityStopped = false;
     }
 
     @Override
@@ -322,7 +335,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     }
 
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -343,7 +355,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         btnChoose = (Button) findViewById(R.id.button);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         statusCheck();
-       // if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        // if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
         location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -358,51 +370,61 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     }
 
     private void fakeLocation() {
-        listFake.add( new LatLng(16.2003,108.114));
-        listFake.add( new LatLng(16.200785, 108.115770));
-        listFake.add( new LatLng(16.200177, 108.116542));
-        listFake.add( new LatLng(16.199342, 108.117175));
-        listFake.add( new LatLng(16.199857, 108.115866));
-        listFake.add( new LatLng(16.199280, 108.116746));
-        listFake.add( new LatLng(16.198734, 108.117207));
-        listFake.add( new LatLng(16.197920, 108.118119));
-        listFake.add( new LatLng(16.197127, 108.119042));
-        listFake.add( new LatLng(16.195499, 108.121799));
-        listFake.add( new LatLng(16.193273, 108.123280));
-        listFake.add( new LatLng(16.192180, 108.126127));
-        listFake.add( new LatLng(16.191078, 108.127618));
+        listFake.add(new LatLng(16.2003, 108.114));
+        listFake.add(new LatLng(16.200785, 108.115770));
+        listFake.add(new LatLng(16.200177, 108.116542));
+        listFake.add(new LatLng(16.199342, 108.117175));
+        listFake.add(new LatLng(16.199857, 108.115866));
+        listFake.add(new LatLng(16.199280, 108.116746));
+        listFake.add(new LatLng(16.198734, 108.117207));
+        listFake.add(new LatLng(16.197920, 108.118119));
+        listFake.add(new LatLng(16.197127, 108.119042));
+        listFake.add(new LatLng(16.195499, 108.121799));
+        listFake.add(new LatLng(16.193273, 108.123280));
+        listFake.add(new LatLng(16.192180, 108.126127));
+        listFake.add(new LatLng(16.191078, 108.127618));
+    }
 
-
+    private void bikeRunning() {
+        MarkerOptions markerOptions = new MarkerOptions().position(listFake.get(0)).title(currentPlace);
+        currentMarker = mMap.addMarker(markerOptions);
+        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.carmarker);
+        currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(ResizeBitmap.getScaledDownBitmap(bitmap, 170, true)));
+        final ArrayList<GPSMarkerDetect> list = GPSMarkerSingleton.getInstance().getGpsMarkerDetect();
+        final Handler handler = new Handler(Looper.getMainLooper());
+        for (final GPSMarkerDetect gpsMarkerDetect : list) {
+            timedelaya = (gpsMarkerDetect.getEndPositionPlayer() - gpsMarkerDetect.getStartPositionPlayer());
+            AddToMap(gpsMarkerDetect.getMainLocation());
+        }
     }
 
 
     private void updateVideoBar() {
 
-        threadControl=new Thread(new Runnable() {
+        threadControl = new Thread(new Runnable() {
             public void run() {
                 do {
-                    if(!activityStopped)
-                    playerView.post(new Runnable() {
-                        public void run() {
-                            if (i<listFake.size()) {
-                                Location location = new Location("");
-                                location.setLatitude(listFake.get(i).latitude);
-                                location.setLongitude(listFake.get(i).longitude);
-                                AddToMap(location);
+                    if (!activityStopped && player.getCurrentPosition() != 0)
+                        playerView.post(new Runnable() {
+                            public void run() {
+                                LatLng currentMarker = listFake.get(i);
+                                LatLng endMarker = listFake.get(i + 1);
+                                mainLocation = endMarker;
+                                if (player.getCurrentPosition() > 0)
+                                    beginPositionPlayer = lastPositionPlayer;
+                                lastPositionPlayer = player.getCurrentPosition();
+                                drawPolyline(currentMarker, endMarker);
                                 i++;
+                                activityStopped = true;
                             }
-                            else  i=0;
-
-                            Log.e(TAG, "run: " + player.getCurrentPosition());
-                        }
-                    });
+                        });
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(3000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                while (true);
+                while (true && i < listFake.size() - 1);
             }
         });
         threadControl.start();
@@ -474,20 +496,24 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
             return null;
     }
 
-    private void AddToMap(Location location) {
+    private void AddToMap(final LatLng latLng) {
 
         //Fetching the last known location using the Fus
-        if (currentMarker != null)
-            currentMarker.remove();
-        //MarkerOptions are used to create a new Marker.You can specify location, title etc with MarkerOptions
 
-        MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(location.getLatitude(), location.getLongitude())).title(currentPlace);
-        currentMarker = mMap.addMarker(markerOptions);
-        currentMarker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.marker));
+        //MarkerOptions are used to create a new Marker.You can specify location, title etc with MarkerOptions
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(timedelaya);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+        currentMarker.setPosition(latLng);
 
 //        editTextPlace.setText(getPlacename(location));
-
-
     }
 
 
@@ -521,11 +547,11 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
             currentMarker = mMap.addMarker(markerOptions);
         } else {
             animateCameraMap(location);
-            AddToMap(location);
+            // AddToMap(location);
         }
 
         Log.d("sangha", "locationaaaa: " + location.getLongitude() + "\t" + location.getLatitude());
-        drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
+        //   drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
         locationManager.removeUpdates(this);
 
     }
@@ -562,8 +588,14 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     @Override
     public void onRoutingSuccess(ArrayList<Route> arrayList, int i) {
-        Toast.makeText(this, "aaaa", Toast.LENGTH_SHORT).show();
+        GPSMarkerDetect gpsMarkerDetect = new GPSMarkerDetect(beginPositionPlayer, lastPositionPlayer, arrayList.get(0).getPoints(), mainLocation);
+        if (gpsMarkerDetect != null)
+            GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
+        //  GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
         addPolylineGPS(arrayList.get(0).getPoints());
+        activityStopped = false;
+        Log.d(TAG, "chinh: " + beginPositionPlayer + "\t" + lastPositionPlayer + "\t" + arrayList.get(0).getPoints().size());
+        //addPolylineGPS(arrayList.get(0).getPoints());
     }
 
     @Override
@@ -584,7 +616,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap=googleMap;
+        mMap = googleMap;
        /* if (location == null) {
             Log.d("sangha", "locationb");
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 10, this);
@@ -595,35 +627,41 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
             AddToMap(location);
 
         }*/
-        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
+/*        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
             @Override
             public void gotLocation(Location location){
                 Log.e(TAG, "gotLocation: "+ location.getLatitude() +"\t" + location.getLongitude() );
                 drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
-                animateCameraMap(location);
+
             }
         };
         MyLocation myLocation = new MyLocation();
         myLocation.getLocation(this, locationResult);
+        */
+        Location location = new Location("");
+        location.setLatitude(16.2003);
+        location.setLongitude(108.114);
+        animateCameraMap(location);
+
+        // drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
 
 
     }
 
     private void addPolylineGPS(List<LatLng> list) {
 
-            int i=0;
-            //In case of more than 5 alternative routes
-
-            PolylineOptions polyOptions = new PolylineOptions();
-            polyOptions.color(getResources().getColor(COLORS[0]));
-            polyOptions.width(10 + i * 3);
-            polyOptions.addAll(list);
-            mMap.addPolyline(polyOptions);
+        int i = 0;
+        //In case of more than 5 alternative routes
+        PolylineOptions polyOptions = new PolylineOptions();
+        polyOptions.color(getResources().getColor(COLORS[0]));
+        polyOptions.width(10 + i * 3);
+        polyOptions.addAll(list);
+        mMap.addPolyline(polyOptions);
     }
 
     private void animateCameraMap(Location mLocation) {
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 15);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 20);
         mMap.animateCamera(cameraUpdate);
     }
 }
