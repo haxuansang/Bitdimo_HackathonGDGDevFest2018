@@ -385,7 +385,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
                     playerView.post(new Runnable() {
                         public void run() {
                             if (i<listFake.size()) {
-
                                 Location location = new Location("");
                                 location.setLatitude(listFake.get(i).latitude);
                                 location.setLongitude(listFake.get(i).longitude);
@@ -398,7 +397,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
                         }
                     });
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep(5000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
