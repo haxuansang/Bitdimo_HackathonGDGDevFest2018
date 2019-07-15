@@ -20,8 +20,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Telephony;
 import android.support.annotation.DrawableRes;
@@ -113,7 +115,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private long playbackPosition = 0;
     SupportMapFragment mapFragment;
     GeoApiContext geoApiContext;
-    final String vidAddress = "https://r5---sn-n4v7knll.googlevideo.com/videoplayback?expire=1563027182&ei=jpIpXajoB8G2kwa_iLWoCw&ip=69.147.248.110&id=o-AFj0jBA8mOllgTKI9iZ3RFE88zKb6Hf4tcy5vzgasrLv&itag=43&source=youtube&requiressl=yes&mm=31%2C26&mn=sn-n4v7knll%2Csn-a5meknl6&ms=au%2Conr&mv=m&mvi=4&pl=23&initcwndbps=12923750&mime=video%2Fwebm&gir=yes&clen=166150114&ratebypass=yes&dur=0.000&lmt=1549756579715197&mt=1563005510&fvip=5&c=WEB&txp=5511222&sparams=expire%2Cei%2Cip%2Cid%2Citag%2Csource%2Crequiressl%2Cmime%2Cgir%2Cclen%2Cratebypass%2Cdur%2Clmt&sig=ALgxI2wwRAIgHV5xrrEfKHADhjjLnRsYZ7VKIjFXooIDbhriDJ2LtZoCIBlYcjCJEnQMj4ngFwLG2TM1p6cCoxxL1Tftvoimge22&lsparams=mm%2Cmn%2Cms%2Cmv%2Cmvi%2Cpl%2Cinitcwndbps&lsig=AHylml4wRQIhAKEKSKGA7Gda9ENBA6N6m8BJFG6b_gXF-kcSXh1ImGXvAiBsUSpycm6yOPkiBXHWTCKFh8_Xj-tvYo0MOa0SoviHUQ%3D%3D&video_id=DPbxkS7n4xA&title=V%C6%B0%E1%BB%A3t+%C4%90%C3%A8o+H%E1%BA%A3i+V%C3%A2n+%E2%96%B6+Tr%E1%BA%A3i+nghi%E1%BB%87m+%C4%91%C6%B0%E1%BB%9Dng+%C4%91%C3%A8o+nguy+hi%E1%BB%83m+d%E1%BB%85+nu%E1%BB%91t+m%E1%BA%A1ng+ng%C6%B0%E1%BB%9Di+nh%E1%BA%A5t+Vi%E1%BB%87t+Nam";
+    final String vidAddress = "https://firebasestorage.googleapis.com/v0/b/wegoapp-935c3.appspot.com/o/videos%2F111111.mp4?alt=media&token=6eab1849-d2dd-46f0-8370-e94d96362555";
     private SimpleExoPlayer player;
     LocationManager locationManager;
     private GoogleMap mMap;
@@ -146,8 +148,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     public long beginPositionPlayer = 0;
     public boolean isStoppedThreadGetRoute = false;
     public LatLng mainLocation;
-    int counta =0;
-    long timedelaya=0;
+    int count = 0;
 
 
     private static final int[] COLORS = new int[]{R.color.colorPrimaryDark, R.color.colorPrimary, R.color.primary_material_light_1, R.color.accent, R.color.primary_dark_material_light};
@@ -391,11 +392,35 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.carmarker);
         currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(ResizeBitmap.getScaledDownBitmap(bitmap, 170, true)));
         final ArrayList<GPSMarkerDetect> list = GPSMarkerSingleton.getInstance().getGpsMarkerDetect();
-        final Handler handler = new Handler(Looper.getMainLooper());
-        for (final GPSMarkerDetect gpsMarkerDetect : list) {
+        /*for (final GPSMarkerDetect gpsMarkerDetect : list) {
             timedelaya = (gpsMarkerDetect.getEndPositionPlayer() - gpsMarkerDetect.getStartPositionPlayer());
-            AddToMap(gpsMarkerDetect.getMainLocation());
+            AddToMap(gpsMarkerDetect.getMainLocation(),timedelaya);
+        }*/
+        if (count > 0) {
+            count = 0;
         }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                do {
+                    final GPSMarkerDetect gpsMarkerDetect = list.get(count);
+                    final List<LatLng> listLat = gpsMarkerDetect.getListMarkerDetect();
+                    long timedelaya = (gpsMarkerDetect.getEndPositionPlayer() - gpsMarkerDetect.getStartPositionPlayer()) / listLat.size();
+                    for (final LatLng latLng : listLat) {
+                        SystemClock.sleep(timedelaya);
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                AddToMap(latLng);
+                            }
+                        });
+                    }
+                    count++;
+                }
+                while (count < list.size());
+            }
+        }).start();
+
     }
 
 
@@ -501,16 +526,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         //Fetching the last known location using the Fus
 
         //MarkerOptions are used to create a new Marker.You can specify location, title etc with MarkerOptions
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(timedelaya);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
         currentMarker.setPosition(latLng);
 
 //        editTextPlace.setText(getPlacename(location));
@@ -661,7 +676,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     private void animateCameraMap(Location mLocation) {
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 20);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 10);
         mMap.animateCamera(cameraUpdate);
     }
 }
