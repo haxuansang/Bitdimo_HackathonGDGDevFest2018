@@ -19,9 +19,13 @@ allprojects {
     repositories {
         google()
         jcenter()
+        mavenCentral()
         maven { url "https://jitpack.io" }
         maven { url 'https://maven.fabric.io/public' }
         maven { url 'https://dl.bintray.com/flurgle/maven' }
+        maven {
+            url "https://maven.google.com/"
+        }
     }
 }
 

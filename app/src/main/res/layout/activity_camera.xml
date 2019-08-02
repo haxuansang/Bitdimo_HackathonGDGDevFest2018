@@ -6,11 +6,15 @@
     android:layout_height="match_parent"
     tools:context="com.appproteam.sangha.bitdimo.CameraActivity">
 
-    <com.flurgle.camerakit.CameraView
+    <com.wonderkiln.camerakit.CameraView
         android:id="@+id/camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:adjustViewBounds="true" />
+        android:adjustViewBounds="true"
+        app:ckVideoQuality="max1080p"
+        app:ckPermissions="strict"
+        app:ckFocus="tapWithMarker"
+        />
 
     <ImageView
         android:visibility="invisible"

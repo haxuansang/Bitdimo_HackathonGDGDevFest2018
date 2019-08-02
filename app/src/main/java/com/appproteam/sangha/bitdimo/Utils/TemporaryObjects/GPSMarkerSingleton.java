@@ -14,17 +14,11 @@ public class GPSMarkerSingleton {
         return gpsMarkerSingleton;
     }
 
-    public static void setGpsMarkerSingleton(GPSMarkerSingleton gpsMarkerSingleton) {
-        GPSMarkerSingleton.gpsMarkerSingleton = gpsMarkerSingleton;
-    }
 
     public ArrayList<GPSMarkerDetect> getGpsMarkerDetect() {
         return listGPSMarkerDetect;
     }
 
-    public void setGpsMarkerDetect(ArrayList<GPSMarkerDetect> gpsMarkerDetect) {
-        this.listGPSMarkerDetect = gpsMarkerDetect;
-    }
     public void insertGpsMarkerDetect(GPSMarkerDetect gpsMarkerDetect) {
         listGPSMarkerDetect.add(gpsMarkerDetect);
     }

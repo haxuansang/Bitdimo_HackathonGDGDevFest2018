@@ -66,13 +66,16 @@ import com.google.android.exoplayer2.PlaybackParameters;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.SimpleExoPlayer;
 import com.google.android.exoplayer2.Timeline;
+import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.PlayerView;
+import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
+import com.google.android.exoplayer2.upstream.FileDataSourceFactory;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.gms.maps.CameraUpdate;
@@ -94,12 +97,19 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.google.maps.GeoApiContext;
+import com.mukesh.tinydb.TinyDB;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static com.appproteam.sangha.bitdimo.CameraActivity.tinyDB;
+import static com.appproteam.sangha.bitdimo.CameraActivity.uri;
 
 public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMyLocationClickListener, GoogleMap.OnMapClickListener, View.OnClickListener, RoutingListener {
     private static final String TAG = "sangha123";
@@ -129,7 +139,8 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private Location currentLocation;
     private String currentPlaceName;
     private boolean isFirst = true;
-    private List<LatLng> listFake = new ArrayList<>();
+    private List<LatLng> listLatLng = new ArrayList<>();
+    private List<LatLng> listRouteLatLng = new ArrayList<>();
     Location location;
     private Intent mapIntent;
     private String placeNameToSearch;
@@ -149,8 +160,36 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     public boolean isStoppedThreadGetRoute = false;
     public LatLng mainLocation;
     int count = 0;
+    List<Location> listLocation;
+    List<Long> listTime;
+    TinyDB tinyDB;
+    private boolean started = false;
+    private Handler handler = new Handler();
+    int countCallPolyLine=0;
 
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            if(!activityStopped && countCallPolyLine==0) {
+                addPolylineGPS(listRouteLatLng);
+               // bikeRunning();
+                stop();
+            }
+            if(started) {
+                startChecking();
+            }
+        }
+    };
 
+    public void stop() {
+        started = false;
+        handler.removeCallbacks(runnable);
+    }
+
+    public void startChecking() {
+        started = true;
+        handler.postDelayed(runnable, 1000);
+    }
     private static final int[] COLORS = new int[]{R.color.colorPrimaryDark, R.color.colorPrimary, R.color.primary_material_light_1, R.color.accent, R.color.primary_dark_material_light};
 
     private MediaSource buildMediaSource(Uri uri) {
@@ -163,7 +202,9 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         player = ExoPlayerFactory.newSimpleInstance(
                 new DefaultRenderersFactory(this),
                 new DefaultTrackSelector(), new DefaultLoadControl());
-        updateVideoBar();
+        if(listLatLng.size()>1 && listTime.size()>1) {
+            updateVideoBar();
+        }
         player.addListener(new Player.EventListener() {
             @Override
             public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
@@ -185,8 +226,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
                 if (playbackState == ExoPlayer.STATE_ENDED) {
                     Log.e(TAG, "onPlayerStateChanged: 1");
-                    Toast.makeText(getApplicationContext(), "Bike is running", Toast.LENGTH_LONG).show();
-                    bikeRunning();
                     player.seekTo(0);
                     player.setPlayWhenReady(true);
 
@@ -231,12 +270,19 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         playerView.setPlayer(player);
         player.setPlayWhenReady(playWhenReady);
         player.seekTo(currentWindow, playbackPosition);
-        Uri uri = Uri.parse(vidAddress);
-        MediaSource mediaSource = buildMediaSource(uri);
+     //  Uri newUri = Uri.parse(uri);
+        MediaSource mediaSource = buildMediaSourcec(uri);
         player.prepare(mediaSource, true, false);
     }
 
-    private void drawPolyline(LatLng start, LatLng endPoint) {
+    private MediaSource buildMediaSourcec(Uri uri) {
+        DataSource.Factory dataSourceFactory = new FileDataSourceFactory();
+        return new ExtractorMediaSource(uri, dataSourceFactory,
+                new DefaultExtractorsFactory(), null, null);
+    }
+
+    private void callPolyline(LatLng start, LatLng endPoint) {
+        Log.d(TAG, "callPolyline: " +start.latitude +"\t"+start.longitude +"\t"+endPoint.latitude+"\t"+endPoint.longitude);
         Routing routing = new Routing.Builder().key("AIzaSyC1rU8F0fBtYFA3Vsj28v3w_025sLGHX0I")
                 .travelMode(AbstractRouting.TravelMode.DRIVING)
                 .withListener(this)
@@ -340,11 +386,27 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_journey);
-        fakeLocation();
+
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, LOCATION_REQUEST_CODE);
             return;
         }
+        tinyDB = new TinyDB(this);
+        String listLocationString = this.tinyDB.getString("ListLocation");
+
+        String listTimeString = this.tinyDB.getString("ListTime");
+        Type type = new TypeToken<List<Location>>(){}.getType();
+        Type typeTime = new TypeToken<List<Long>>(){}.getType();
+        Gson gson = new Gson();
+        listLocation = gson.fromJson(listLocationString, type);
+        for (Location location : listLocation) {
+            Log.d(TAG, "onCreate: "+ location.getLatitude()+ "\t" + location.getLongitude());
+        }
+        gson = new Gson();
+        listTime = gson.fromJson(listTimeString,typeTime);
+        Log.d(TAG, "onCreate: " + listLocation.size() + "\t" + listTime.size());
+        //Toast.makeText(this, "" + listLocation.size() + "\t" + listTime.size(), Toast.LENGTH_SHORT).show();
+        createListLocation();
         geoApiContext = new GeoApiContext.Builder().apiKey(getString(R.string.google_api_key)).build();
         playerView = findViewById(R.id.myVideo);
         mediaController = new MediaController(this);
@@ -370,32 +432,20 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     }
 
-    private void fakeLocation() {
-        listFake.add(new LatLng(16.2003, 108.114));
-        listFake.add(new LatLng(16.200785, 108.115770));
-        listFake.add(new LatLng(16.200177, 108.116542));
-        listFake.add(new LatLng(16.199342, 108.117175));
-        listFake.add(new LatLng(16.199857, 108.115866));
-        listFake.add(new LatLng(16.199280, 108.116746));
-        listFake.add(new LatLng(16.198734, 108.117207));
-        listFake.add(new LatLng(16.197920, 108.118119));
-        listFake.add(new LatLng(16.197127, 108.119042));
-        listFake.add(new LatLng(16.195499, 108.121799));
-        listFake.add(new LatLng(16.193273, 108.123280));
-        listFake.add(new LatLng(16.192180, 108.126127));
-        listFake.add(new LatLng(16.191078, 108.127618));
+    private void createListLocation() {
+        for (Location location: listLocation){
+            listLatLng.add(new LatLng(location.getLatitude(),location.getLongitude()));
+        }
+
     }
 
     private void bikeRunning() {
-        MarkerOptions markerOptions = new MarkerOptions().position(listFake.get(0)).title(currentPlace);
+        MarkerOptions markerOptions = new MarkerOptions().position(listLatLng.get(0)).title(currentPlace);
         currentMarker = mMap.addMarker(markerOptions);
         Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.carmarker);
         currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(ResizeBitmap.getScaledDownBitmap(bitmap, 170, true)));
         final ArrayList<GPSMarkerDetect> list = GPSMarkerSingleton.getInstance().getGpsMarkerDetect();
-        /*for (final GPSMarkerDetect gpsMarkerDetect : list) {
-            timedelaya = (gpsMarkerDetect.getEndPositionPlayer() - gpsMarkerDetect.getStartPositionPlayer());
-            AddToMap(gpsMarkerDetect.getMainLocation(),timedelaya);
-        }*/
+
         if (count > 0) {
             count = 0;
         }
@@ -429,30 +479,49 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         threadControl = new Thread(new Runnable() {
             public void run() {
                 do {
-                    if (!activityStopped && player.getCurrentPosition() != 0)
+                    if (!activityStopped /*&& player.getCurrentPosition() != 0*/)
                         playerView.post(new Runnable() {
                             public void run() {
-                                LatLng currentMarker = listFake.get(i);
-                                LatLng endMarker = listFake.get(i + 1);
+
+                                LatLng currentMarker = listLatLng.get(i);
+                                LatLng endMarker = listLatLng.get(i + 1);
+                                Log.d(TAG, "testmarker: " +currentMarker.latitude +"\t"+currentMarker.longitude +"\t"+endMarker.latitude+"\t"+endMarker.longitude);
+
                                 mainLocation = endMarker;
-                                if (player.getCurrentPosition() > 0)
-                                    beginPositionPlayer = lastPositionPlayer;
-                                lastPositionPlayer = player.getCurrentPosition();
-                                drawPolyline(currentMarker, endMarker);
+                                beginPositionPlayer = listTime.get(i);
+                                lastPositionPlayer = listTime.get(i+1);
+                                if (currentMarker.latitude!=endMarker.latitude || currentMarker.longitude!=endMarker.longitude) {
+                                    countCallPolyLine++;
+                                    callPolyline(currentMarker, endMarker);
+                                    activityStopped = true;
+                                    Log.d(TAG, "count route"+ countCallPolyLine);
+                                }
                                 i++;
-                                activityStopped = true;
+                                if(i>=listLocation.size()-2 && countCallPolyLine==0){
+                                    if (!activityStopped) {
+                                        addPolylineGPS(listRouteLatLng);
+                                       // bikeRunning();
+                                    }
+                                    else {
+                                        receiveRoute();
+                                    }
+                                }
                             }
                         });
                     try {
-                        Thread.sleep(3000);
+                        Thread.sleep(100);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
                 }
-                while (true && i < listFake.size() - 1);
+                while (true && i < listLatLng.size()-2);
             }
         });
         threadControl.start();
+    }
+
+    private void receiveRoute() {
+        startChecking();
     }
 
     private void chooseVideo() {
@@ -593,7 +662,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     @Override
     public void onRoutingFailure(RouteException e) {
-
+        Log.d(TAG, "onRoutingFailure: "+e);
     }
 
     @Override
@@ -603,13 +672,16 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     @Override
     public void onRoutingSuccess(ArrayList<Route> arrayList, int i) {
-        GPSMarkerDetect gpsMarkerDetect = new GPSMarkerDetect(beginPositionPlayer, lastPositionPlayer, arrayList.get(0).getPoints(), mainLocation);
+       GPSMarkerDetect gpsMarkerDetect = new GPSMarkerDetect(beginPositionPlayer, lastPositionPlayer, arrayList.get(0).getPoints(), mainLocation);
         if (gpsMarkerDetect != null)
-            GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
-        //  GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
-        addPolylineGPS(arrayList.get(0).getPoints());
+              GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
+       //addPolylineGPS(arrayList.get(0).getPoints());
+        countCallPolyLine--;
+        Log.d(TAG, "onRoutingSuccess: " + this.i);
+        listRouteLatLng.addAll(arrayList.get(0).getPoints());
         activityStopped = false;
-        Log.d(TAG, "chinh: " + beginPositionPlayer + "\t" + lastPositionPlayer + "\t" + arrayList.get(0).getPoints().size());
+        Log.d(TAG, "route khi tru di"+ countCallPolyLine);
+
         //addPolylineGPS(arrayList.get(0).getPoints());
     }
 
@@ -653,13 +725,8 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         MyLocation myLocation = new MyLocation();
         myLocation.getLocation(this, locationResult);
         */
-        Location location = new Location("");
-        location.setLatitude(16.2003);
-        location.setLongitude(108.114);
+        Location location = listLocation.get(0);
         animateCameraMap(location);
-
-        // drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
-
 
     }
 
@@ -676,7 +743,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     private void animateCameraMap(Location mLocation) {
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 10);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 18);
         mMap.animateCamera(cameraUpdate);
     }
 }

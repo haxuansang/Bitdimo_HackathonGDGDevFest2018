@@ -1,6 +1,7 @@
 package com.appproteam.sangha.bitdimo;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.ContentValues;
@@ -19,6 +20,8 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,22 +36,64 @@ import android.widget.Toast;
 
 
 import com.appproteam.sangha.bitdimo.Utils.MyLocation;
-import com.flurgle.camerakit.CameraListener;
-import com.flurgle.camerakit.CameraView;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.mukesh.tinydb.TinyDB;
+import com.wonderkiln.camerakit.CameraKitEventListenerAdapter;
+import com.wonderkiln.camerakit.CameraKitVideo;
+import com.wonderkiln.camerakit.CameraView;
+
 import java.io.File;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 
-public class CameraActivity extends AppCompatActivity  {
+public class CameraActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
+        GoogleApiClient.ConnectionCallbacks{
+    boolean isFirstTime = true;
+    LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            if(isFirstTime) {
+                progress.dismiss();
+                isFirstTime=false;
+                runThreadTracking();
+                imvRecord.setVisibility(View.VISIBLE);
+                btnRecording.setBackgroundResource(R.drawable.ic_stop_recording);
+                Log.d(TAG, "First Time: "+ location.getLatitude() +"\t" + location.getLongitude() +"\t" +time);
+                list.add(location);
+                listTime.add(time);
+            }
+            else {
+                Log.d(TAG, "onLocationChanged: " + location.getLatitude() + "\t" + location.getLongitude() + "\t" + time);
+            }
+
+        }
+    };
+    MyLocation.LocationResult locationResult = new MyLocation.LocationResult() {
+        @Override
+        public void gotLocation(Location location) {
+            firstLocation = location;
+            long beginTime = 0;
+            listTime.add(beginTime);
+            list.add(location);
+            Log.e(TAG, "gotLocation: " + location.getLatitude() + "\t" + location.getLongitude());
+            Toast.makeText(CameraActivity.this, "You got first location. You can record video right now!", Toast.LENGTH_SHORT).show();
+            btnRecording.setOnClickListener(recordListener);
+            progress.dismiss();
+        }
+    };
+    private LocationRequest locationRequest;
+    private static final float MIN_DISPLACEMENT = 1;
+    private static final int LOCATION_REQUEST_CODE = 101;
+    private GoogleApiClient googleApiClient;
+    private boolean isConnected;
     public static final String LOGTAG = "VIDEOCAPTURE";
     private static final String TAG = "sangha123";
-    private CamcorderProfile camcorderProfile;
     TextView tv_duration;
     ImageButton btnRecording;
     boolean isRecording = false;
@@ -63,55 +108,40 @@ public class CameraActivity extends AppCompatActivity  {
     Location firstLocation;
     MyLocation myLocation;
     long time = 0;
-    TinyDB tinyDB;
+    public static TinyDB tinyDB;
     int minute = 0;
     int second = 0;
     ImageView imvRecord;
     int countCallback=0;
     ProgressDialog progress;
+    public static Uri uri;
     private boolean started = false;
-    private Handler handler = new Handler();
 
-    private Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            if(countCallback<list.size()) {
-                progress.dismiss();
-                moveActivity();
-                stop();
-            }
-            if(started) {
-                startChecking();
-            }
-        }
-    };
 
-    public void stop() {
-        started = false;
-        handler.removeCallbacks(runnable);
-    }
-
-    public void startChecking() {
-        started = true;
-        handler.postDelayed(runnable, 1000);
-    }
     View.OnClickListener recordListener = new View.OnClickListener() {
+        @SuppressLint("MissingPermission")
         @Override
         public void onClick(View view) {
             if (!isRecording) {
                 isRecording = true;
-                cameraKitView.startRecordingVideo();
-                runThreadTracking();
-                imvRecord.setVisibility(View.VISIBLE);
-                btnRecording.setBackgroundResource(R.drawable.ic_stop_recording);
+                cameraKitView.captureVideo();
+                if(isConnected) {
+                    progress.show();
+                    LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, locationListener);
+                }
+                else {
+                    Toast.makeText(CameraActivity.this, "Connection Failed", Toast.LENGTH_SHORT).show();
+                }
+
             }
             else {
                 isRecording = false;
                 activityStopped = true;
                 imvRecord.setVisibility(View.INVISIBLE);
                 btnRecording.setBackgroundResource(R.drawable.ic_record);
-                cameraKitView.stopRecordingVideo();
+                cameraKitView.stopVideo();
                 tv_duration.setText("00:00");
+                LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, locationListener);
             }
         }
     };
@@ -125,8 +155,12 @@ public class CameraActivity extends AppCompatActivity  {
         sdb = gson.toJson(listTime);
         tinyDB.putString("ListLocation", sda);
         tinyDB.putString("ListTime", sdb);
+        Intent intent = new Intent(CameraActivity.this,JourneyMap.class);
+        startActivity(intent);
+
     }
 
+    @SuppressLint("RestrictedApi")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -137,12 +171,16 @@ public class CameraActivity extends AppCompatActivity  {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_camera);
         tinyDB = new TinyDB(this);
-        String test = tinyDB.getString("ListLocation");
-        Type type = new TypeToken<List<Location>>(){}.getType();
-        Gson gson = new Gson();
-        List<Location> listss = gson.fromJson(test, type);
-        Toast.makeText(this, "" + listss.size(), Toast.LENGTH_SHORT).show();
         setContentView(R.layout.activity_camera);
+        googleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
+
+        locationRequest = new LocationRequest();
+        locationRequest.setSmallestDisplacement(MIN_DISPLACEMENT);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         btnRecording = (ImageButton) findViewById(R.id.btn_record);
         imvRecord = findViewById(R.id.dotRecord);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -158,8 +196,18 @@ public class CameraActivity extends AppCompatActivity  {
         progress.setTitle("Loading");
         progress.setMessage("Wait while loading...");
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-        progress.show();
-        cameraKitView.setCameraListener(new CameraListener() {
+
+        cameraKitView.addCameraKitListener(new CameraKitEventListenerAdapter() {
+            @Override
+            public void onVideo(CameraKitVideo video) {
+                super.onVideo(video);
+                tinyDB.putObject("uriVideo",addVideo(video.getVideoFile()));
+                moveActivity();
+            }
+        });
+
+
+       /* cameraKitView.setCameraListener(new CameraListener() {
             @Override
             public void onCameraOpened() {
                 super.onCameraOpened();
@@ -173,23 +221,10 @@ public class CameraActivity extends AppCompatActivity  {
                 progress.show();
                 startChecking();
             }
-        });
+        });*/
         btnRecording = (ImageButton) findViewById(R.id.btn_record);
-        MyLocation.LocationResult locationResult = new MyLocation.LocationResult() {
-            @Override
-            public void gotLocation(Location location) {
-                firstLocation = location;
-                long beginTime = 0;
-                listTime.add(beginTime);
-                list.add(location);
-                Log.e(TAG, "gotLocation: " + location.getLatitude() + "\t" + location.getLongitude());
-                Toast.makeText(CameraActivity.this, "You got first location. You can record video right now!", Toast.LENGTH_SHORT).show();
-                btnRecording.setOnClickListener(recordListener);
-                progress.dismiss();
-            }
-        };
-        myLocation = new MyLocation();
-        myLocation.getLocation(this, this, locationResult);
+
+
 
     }
 
@@ -207,11 +242,12 @@ public class CameraActivity extends AppCompatActivity  {
         values.put(MediaStore.Video.Media.TITLE, "video");
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
         values.put(MediaStore.Video.Media.DATA, videoFile.getAbsolutePath());
+        uri = Uri.fromFile(videoFile);
         return getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
 
     }
     private void runThreadTracking() {
-        threadControl = new Thread(new Runnable() {
+      /*  threadControl = new Thread(new Runnable() {
             public void run() {
                 do {
                     runOnUiThread(new Runnable() {
@@ -229,7 +265,7 @@ public class CameraActivity extends AppCompatActivity  {
                         }
                     });
                     try {
-                        Thread.sleep(5000);
+                        Thread.sleep(4000);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -237,7 +273,8 @@ public class CameraActivity extends AppCompatActivity  {
                 while (isRecording);
             }
         });
-        threadControl.start();
+         threadControl.start();*/
+
         threadTimeCounter = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -274,12 +311,12 @@ public class CameraActivity extends AppCompatActivity  {
         threadTimeCounter.start();
     }
 
+
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         cameraKitView.start();
     }
-
 
     @Override
     protected void onPause() {
@@ -290,8 +327,14 @@ public class CameraActivity extends AppCompatActivity  {
 
     @Override
     protected void onStop() {
-        cameraKitView.stop();
         super.onStop();
+        googleApiClient.disconnect();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        googleApiClient.connect();
     }
 
     @Override
@@ -321,4 +364,19 @@ public class CameraActivity extends AppCompatActivity  {
     }
 
 
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        isConnected = true;
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        isConnected = false;
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
 }
