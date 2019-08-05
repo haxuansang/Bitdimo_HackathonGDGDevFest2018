@@ -6,15 +6,30 @@
     android:layout_height="match_parent"
     tools:context="com.appproteam.sangha.bitdimo.CameraActivity">
 
-    <com.wonderkiln.camerakit.CameraView
+    <com.otaliastudios.cameraview.CameraView
         android:id="@+id/camera"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:adjustViewBounds="true"
-        app:ckVideoQuality="max1080p"
-        app:ckPermissions="strict"
-        app:ckFocus="tapWithMarker"
-        />
+        android:keepScreenOn="true"
+        app:cameraExperimental="true"
+        app:cameraEngine="camera2"
+        app:cameraPreview="glSurface"
+        app:cameraPlaySounds="true"
+        app:cameraGrid="off"
+        app:cameraFlash="off"
+        app:cameraAudio="on"
+        app:cameraFacing="back"
+        app:cameraGestureTap="autoFocus"
+        app:cameraGestureLongTap="none"
+        app:cameraGesturePinch="zoom"
+        app:cameraGestureScrollHorizontal="exposureCorrection"
+        app:cameraGestureScrollVertical="none"
+        app:cameraMode="video"
+        app:cameraAutoFocusMarker="@string/cameraview_default_autofocus_marker">
+
+
+    </com.otaliastudios.cameraview.CameraView>
+
 
     <ImageView
         android:visibility="invisible"

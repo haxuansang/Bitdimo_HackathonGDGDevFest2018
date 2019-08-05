@@ -2,22 +2,17 @@ package com.appproteam.sangha.bitdimo.View.Fragments;
 
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
+
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.appproteam.sangha.bitdimo.LoginActivity;
-import com.appproteam.sangha.bitdimo.MainActivity;
-import com.appproteam.sangha.bitdimo.MapsActivity;
-import com.appproteam.sangha.bitdimo.Presenter.Objects.ExplorePlace;
-import com.appproteam.sangha.bitdimo.Presenter.Objects.ExplorePlaceLinear;
-import com.appproteam.sangha.bitdimo.Presenter.Objects.MapsObject;
 import com.appproteam.sangha.bitdimo.R;
 import com.appproteam.sangha.bitdimo.Retrofit.ExplorePost;
 import com.appproteam.sangha.bitdimo.Singleton.DataPostsRetrieve;
@@ -26,7 +21,6 @@ import com.appproteam.sangha.bitdimo.View.Adapter.AdapterExploreLinear;
 import com.appproteam.sangha.bitdimo.View.Adapter.AdapterFilter;
 import com.appproteam.sangha.bitdimo.View.CallBack.ChangeDataExplore;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import retrofit2.Call;

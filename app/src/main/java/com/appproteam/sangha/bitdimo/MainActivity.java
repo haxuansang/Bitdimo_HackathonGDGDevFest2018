@@ -1,22 +1,20 @@
 package com.appproteam.sangha.bitdimo;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.BottomNavigationView;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
+
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
 
 import com.appproteam.sangha.bitdimo.Presenter.Objects.UserFake;
-import com.appproteam.sangha.bitdimo.Retrofit.ExplorePost;
-import com.appproteam.sangha.bitdimo.Singleton.DataPostsRetrieve;
-import com.appproteam.sangha.bitdimo.Singleton.OutstandingPost;
 import com.appproteam.sangha.bitdimo.View.Adapter.AdapterSpinner;
 import com.appproteam.sangha.bitdimo.View.Adapter.ViewPagerAdapter;
 import com.appproteam.sangha.bitdimo.View.Fragments.AddFragment;
@@ -25,17 +23,11 @@ import com.appproteam.sangha.bitdimo.View.Fragments.InformationFragment;
 import com.appproteam.sangha.bitdimo.View.Fragments.ManageFragment;
 import com.appproteam.sangha.bitdimo.View.Fragments.OutStandingFragment;
 import com.facebook.drawee.backends.pipeline.Fresco;
-import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Logger;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+
 
 import java.util.ArrayList;
 import java.util.List;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
@@ -44,8 +36,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     private Toolbar toolbar;
     private Spinner spinnerCity;
     private ViewPager viewPager;
-    public static FirebaseStorage firebaseStorage;
-    public static StorageReference storageReference;
+
     public static List<UserFake> listUser;
 
     @Override
@@ -114,8 +105,7 @@ public class MainActivity extends AppCompatActivity implements BottomNavigationV
     }
 
     private void createView() {
-        firebaseStorage = FirebaseStorage.getInstance();
-        storageReference= firebaseStorage.getReference();
+
 
         mTextMessage = (TextView) findViewById(R.id.message);
         final BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);

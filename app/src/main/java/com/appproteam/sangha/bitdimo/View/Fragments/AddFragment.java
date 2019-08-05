@@ -8,11 +8,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.CardView;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,36 +18,37 @@ import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.cardview.widget.CardView;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.appproteam.sangha.bitdimo.CustomPhotoGalleryActivity;
 import com.appproteam.sangha.bitdimo.MainActivity;
 import com.appproteam.sangha.bitdimo.MapsActivity;
-import com.appproteam.sangha.bitdimo.Presenter.Objects.MapsObject;
 import com.appproteam.sangha.bitdimo.R;
-import com.appproteam.sangha.bitdimo.Retrofit.ExplorePost;
 import com.appproteam.sangha.bitdimo.Singleton.DataGalery;
-import com.appproteam.sangha.bitdimo.Singleton.DataPostsRetrieve;
 import com.appproteam.sangha.bitdimo.View.Adapter.AdapterAdd;
 import com.appproteam.sangha.bitdimo.MultipleImagesSelector.ImagesSelectorActivity;
 import com.appproteam.sangha.bitdimo.MultipleImagesSelector.SelectorSettings;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+
 
 import java.io.File;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 
 
 import static android.app.Activity.RESULT_OK;
-import static android.support.constraint.Constraints.TAG;
+
 
 
 public class AddFragment extends Fragment implements View.OnClickListener {
+    private static final String TAG = "sadas" ;
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static int count =0;
@@ -244,14 +241,14 @@ public class AddFragment extends Fragment implements View.OnClickListener {
     private void upFirebase()
     {
         rl_loadingpost.setVisibility(View.VISIBLE);
-        for (int i =0 ; i< listUri.size();i++) {
-            StorageReference ref = MainActivity.storageReference.child("images/"+i);
+        /*for (int i =0 ; i< listUri.size();i++) {
+          StorageReference ref = MainActivity.storageReference.child("images/"+i);
             ref.putFile(listUri.get(i)).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
 
-                            /*Uri uriCurrent =taskSnapshot.getMetadata().getReference().getDownloadUrl().getResult();
+                            *//*Uri uriCurrent =taskSnapshot.getMetadata().getReference().getDownloadUrl().getResult();
                             for (ExplorePlaceLinear explorePlaceLinear :listExploreLinear)
                             {
                                 explorePlaceLinear.setUrlImageOfUser(uriCurrent.toString());
@@ -259,7 +256,7 @@ public class AddFragment extends Fragment implements View.OnClickListener {
 
                             ManageFragment.this.adapterManager.notifyDataSetChanged();
 
-*/
+*//*
 
                     Task<Uri> result = taskSnapshot.getMetadata().getReference().getDownloadUrl();
                     result.addOnSuccessListener(new OnSuccessListener<Uri>() {
@@ -288,7 +285,7 @@ public class AddFragment extends Fragment implements View.OnClickListener {
 
                 }
             });
-        }
+        }*/
     }
 
     private void checkSizeArray(int count) {

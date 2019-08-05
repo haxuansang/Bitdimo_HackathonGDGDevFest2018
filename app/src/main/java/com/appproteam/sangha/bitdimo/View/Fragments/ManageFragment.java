@@ -8,20 +8,20 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.appproteam.sangha.bitdimo.EditActivity;
 import com.appproteam.sangha.bitdimo.MainActivity;
-import com.appproteam.sangha.bitdimo.Presenter.Objects.ExplorePlace;
-import com.appproteam.sangha.bitdimo.Presenter.Objects.ExplorePlaceLinear;
 import com.appproteam.sangha.bitdimo.Presenter.Objects.MapsObject;
 import com.appproteam.sangha.bitdimo.R;
 import com.appproteam.sangha.bitdimo.Retrofit.ExplorePost;
@@ -30,9 +30,7 @@ import com.appproteam.sangha.bitdimo.View.CallBack.ChangeUserInformation;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -69,9 +67,10 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
     /**
      * Use this factory method to create a new instance of
      * this fragment using the provided parameters.
+     * <p>
+     * // * @param param1 Parameter 1.
+     * //  * @param param2 Parameter 2.
      *
-    // * @param param1 Parameter 1.
-   //  * @param param2 Parameter 2.
      * @return A new instance of fragment ManageFragment.
      */
     // TODO: Rename and change types and number of parameters
@@ -96,7 +95,7 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
 
     private void createView() {
 
-        rvManage=(RecyclerView)view.findViewById(R.id.rv_manage);
+        rvManage = (RecyclerView) view.findViewById(R.id.rv_manage);
 
 
     }
@@ -105,7 +104,7 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        view= inflater.inflate(R.layout.fragment_manage, container, false);
+        view = inflater.inflate(R.layout.fragment_manage, container, false);
         createView();
         fakeData();
         return view;
@@ -118,66 +117,59 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
         listOfPlaces.add("https://yeudanang.biz/wp-content/uploads/2018/11/45041668_481346935706730_7229797798877593600_o.jpg");
         listOfPlaces.add("https://yeudanang.biz/wp-content/uploads/2018/11/45152551_481346865706737_1362042573190856704_n.jpg");
         listExploreLinear.add(new ExplorePost(MainActivity.listUser.get(16).getNameOfUser()
-                ,"18/11/2018 15h00","Mãi luôn tươi trẻ khi ở Đà Nẵng"
-                ,MainActivity.listUser.get(16).getUrlOfImages()
-                ,100,
+                , "18/11/2018 15h00", "Mãi luôn tươi trẻ khi ở Đà Nẵng"
+                , MainActivity.listUser.get(16).getUrlOfImages()
+                , 100,
                 6,
-                listOfPlaces,new MapsObject(16.1197212,108.2691571),"Sơn Trà, Đà Nẵng"));
+                listOfPlaces, new MapsObject(16.1197212, 108.2691571), "Sơn Trà, Đà Nẵng"));
 
 
         //1
-        listOfPlaces= new ArrayList<>();
+        listOfPlaces = new ArrayList<>();
         listOfPlaces.add("http://dulichdanang.xyz/wp-content/uploads/2016/10/cau-dn-7-Copy.jpg");
         listExploreLinear.add(new ExplorePost(MainActivity.listUser.get(16).getNameOfUser()
-                ,"18/11/2018 15h00","Hội thanh xuân của tôi, những tri kỉ mà tôi may mắn có được!"
-                ,MainActivity.listUser.get(16).getUrlOfImages()
-                ,100,
+                , "18/11/2018 15h00", "Hội thanh xuân của tôi, những tri kỉ mà tôi may mắn có được!"
+                , MainActivity.listUser.get(16).getUrlOfImages()
+                , 100,
                 6,
-                listOfPlaces,new MapsObject(16.051211, 108.229903),"Cầu Nguyễn Văn Trỗi, Hải Châu"));
+                listOfPlaces, new MapsObject(16.051211, 108.229903), "Cầu Nguyễn Văn Trỗi, Hải Châu"));
 
         //2
-        listOfPlaces= new ArrayList<>();
+        listOfPlaces = new ArrayList<>();
         listOfPlaces.add("https://yeudanang.biz/wp-content/uploads/2018/02/3-2.jpg");
         listOfPlaces.add("https://yeudanang.biz/wp-content/uploads/2018/02/5-2.jpg");
         listOfPlaces.add("https://yeudanang.biz/wp-content/uploads/2018/02/2-2.jpg");
         listExploreLinear.add(new ExplorePost(MainActivity.listUser.get(16).getNameOfUser()
-                ,"18/11/2018 15h00","Mùa đông năm ấy.."
-                ,MainActivity.listUser.get(16).getUrlOfImages()
-                ,120,
+                , "18/11/2018 15h00", "Mùa đông năm ấy.."
+                , MainActivity.listUser.get(16).getUrlOfImages()
+                , 120,
                 6,
-                listOfPlaces,new MapsObject(15.966689, 108.284588),"Phim trường Cocobay, Hòa Hải, Ngũ Hành Sơn"));
-            adapterManager = new AdapterManager(getContext(),listExploreLinear,getActivity());
-            adapterManager.registerCallback(new ChangeUserInformation() {
-                                                @Override
-                                                public void ChangeImageUser(CircleImageView userImage) {
-                                                    civ_user=userImage;
-                                                    loadImageFromLibrary();
-                                                }
+                listOfPlaces, new MapsObject(15.966689, 108.284588), "Phim trường Cocobay, Hòa Hải, Ngũ Hành Sơn"));
+        adapterManager = new AdapterManager(getContext(), listExploreLinear, getActivity());
+        adapterManager.registerCallback(new ChangeUserInformation() {
+            @Override
+            public void ChangeImageUser(CircleImageView userImage) {
+                civ_user = userImage;
+                loadImageFromLibrary();
+            }
 
-                @Override
-                public void EditUser() {
-                    getActivity().startActivity(new Intent(getActivity(),EditActivity.class));
+            @Override
+            public void EditUser() {
+                getActivity().startActivity(new Intent(getActivity(), EditActivity.class));
 
-                }
-            });
-                    rvManage.setLayoutManager(new LinearLayoutManager(getContext()));
-
-
-
-
-
+            }
+        });
+        rvManage.setLayoutManager(new LinearLayoutManager(getContext()));
 
 
         rvManage.setAdapter(adapterManager);
 
-        }
-
+    }
 
 
     @Override
     public void onClick(View view) {
-        switch (view.getId())
-        {
+        switch (view.getId()) {
             case R.id.ci_user_manage:
                 loadImageFromLibrary();
         }
@@ -192,29 +184,27 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
     @Override
     public void onActivityResult(int requestCode, int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if(resultCode== Activity.RESULT_OK)
-        {
-            if(requestCode==7171)
-            {
+        if (resultCode == Activity.RESULT_OK) {
+            if (requestCode == 7171) {
                 final ProgressDialog progressDialog = new ProgressDialog(getContext());
                 progressDialog.setTitle("Đăng ảnh");
                 progressDialog.setMessage("Vui lòng chờ...");
                 progressDialog.setCancelable(false);
                 progressDialog.show();
 
-                StorageReference ref = MainActivity.storageReference.child("images/"+"admin");
+                // StorageReference ref = MainActivity.storageReference.child("images/"+"admin");
 
                 final Uri uri = data.getData();
-                if(uri!=null) {
+                if (uri != null) {
                     try {
 
-                        final  Bitmap bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
+                        final Bitmap bitmap = MediaStore.Images.Media.getBitmap(getActivity().getContentResolver(), uri);
 
 
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    ref.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                   /* ref.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
@@ -230,7 +220,7 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
                             });
 
                            // adapterManager.updateImageUser(uriCurrent);
-                            /*
+                            *//*
                             for (ExplorePlaceLinear explorePlaceLinear :listExploreLinear)
                             {
                                 explorePlaceLinear.setUrlImageOfUser(uriCurrent.toString());
@@ -238,7 +228,7 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
 
                             ManageFragment.this.adapterManager.notifyDataSetChanged();
 
-*/
+*//*
 
 
                         }
@@ -260,8 +250,11 @@ public class ManageFragment extends Fragment implements View.OnClickListener {
 
             }
         }
+*/
 
+                }
+            }
+        }
 
     }
-
 }

@@ -11,44 +11,32 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.CountDownTimer;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.provider.Telephony;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.BottomSheetBehavior;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
-import android.widget.TextView;
 import android.widget.Toast;
-import android.net.Uri;
 import android.widget.MediaController;
-import android.widget.VideoView;
 
-import com.appproteam.sangha.bitdimo.Utils.MyLocation;
 import com.appproteam.sangha.bitdimo.Utils.ResizeBitmap;
 import com.appproteam.sangha.bitdimo.Utils.TemporaryObjects.GPSMarkerDetect;
 import com.appproteam.sangha.bitdimo.Utils.TemporaryObjects.GPSMarkerSingleton;
@@ -76,14 +64,12 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.FileDataSourceFactory;
-import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -93,10 +79,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.OnProgressListener;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.maps.GeoApiContext;
@@ -108,12 +92,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.appproteam.sangha.bitdimo.CameraActivity.tinyDB;
 import static com.appproteam.sangha.bitdimo.CameraActivity.uri;
 
 public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMyLocationClickListener, GoogleMap.OnMapClickListener, View.OnClickListener, RoutingListener {
     private static final String TAG = "sangha123";
-    private StorageReference mStorageRef;
+
     private static final int REQUEST_TAKE_GALLERY_VIDEO = 1111;
     private Button btnChoose;
     public ProgressDialog progressDialog;
@@ -414,7 +397,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         progressDialog.setTitle("Uploading Video");
         progressDialog.setMessage("Please wait...");
         progressDialog.setCancelable(false);
-        mStorageRef = FirebaseStorage.getInstance().getReference();
+
         btnChoose = (Button) findViewById(R.id.button);
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         statusCheck();
@@ -539,12 +522,12 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
                 progressDialog.show();
                 Uri selectedImageUri = data.getData();
                 //filemanagerstring = getPath(selectedImageUri);
-                uploadVideo(selectedImageUri);
+               // uploadVideo(selectedImageUri);
             }
         }
     }
 
-    private void uploadVideo(Uri uri) {
+    /*private void uploadVideo(Uri uri) {
         long id = Long.valueOf(uri.getLastPathSegment());
         StorageReference ref = mStorageRef.child("videos/" + id);
         ref.putFile(uri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -573,7 +556,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
                 progressDialog.setMessage("uploaded " + progress + "%");
             }
         });
-    }
+    }*/
 
 
     public String getPath(Uri uri) {

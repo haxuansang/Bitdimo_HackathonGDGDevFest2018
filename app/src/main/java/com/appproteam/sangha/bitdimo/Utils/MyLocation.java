@@ -11,7 +11,9 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
+
+import androidx.core.app.ActivityCompat;
+
 
 public class MyLocation {
     Timer timer1;

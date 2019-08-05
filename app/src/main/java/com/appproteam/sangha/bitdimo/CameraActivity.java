@@ -20,9 +20,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -35,6 +33,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.appproteam.sangha.bitdimo.Utils.MyLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -43,9 +45,11 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.gson.Gson;
 import com.mukesh.tinydb.TinyDB;
-import com.wonderkiln.camerakit.CameraKitEventListenerAdapter;
-import com.wonderkiln.camerakit.CameraKitVideo;
-import com.wonderkiln.camerakit.CameraView;
+import com.otaliastudios.cameraview.CameraListener;
+import com.otaliastudios.cameraview.CameraLogger;
+import com.otaliastudios.cameraview.CameraView;
+import com.otaliastudios.cameraview.VideoResult;
+
 
 import java.io.File;
 import java.util.ArrayList;
@@ -124,7 +128,7 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
         public void onClick(View view) {
             if (!isRecording) {
                 isRecording = true;
-                cameraKitView.captureVideo();
+                runThreadTracking();
                 if(isConnected) {
                     progress.show();
                     LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, locationListener);
@@ -137,10 +141,10 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
             else {
                 isRecording = false;
                 activityStopped = true;
+                tv_duration.setText("00:00");
                 imvRecord.setVisibility(View.INVISIBLE);
                 btnRecording.setBackgroundResource(R.drawable.ic_record);
                 cameraKitView.stopVideo();
-                tv_duration.setText("00:00");
                 LocationServices.FusedLocationApi.removeLocationUpdates(googleApiClient, locationListener);
             }
         }
@@ -170,6 +174,8 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_camera);
+        CameraLogger.setLogLevel(CameraLogger.LEVEL_VERBOSE);
+
         tinyDB = new TinyDB(this);
         setContentView(R.layout.activity_camera);
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -191,17 +197,17 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
 
         btnRecording.setOnClickListener(recordListener);
         cameraKitView = findViewById(R.id.camera);
-        tv_duration = findViewById(R.id.tv_duration);
+        tv_duration = (TextView) findViewById(R.id.tv_duration);
         progress = new ProgressDialog(this);
         progress.setTitle("Loading");
         progress.setMessage("Wait while loading...");
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
 
-        cameraKitView.addCameraKitListener(new CameraKitEventListenerAdapter() {
+        cameraKitView.addCameraListener(new CameraListener() {
             @Override
-            public void onVideo(CameraKitVideo video) {
-                super.onVideo(video);
-                tinyDB.putObject("uriVideo",addVideo(video.getVideoFile()));
+            public void onVideoTaken(@NonNull VideoResult result) {
+                super.onVideoTaken(result);
+                tinyDB.putObject("uriVideo",addVideo(result.getFile()));
                 moveActivity();
             }
         });
@@ -247,6 +253,9 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
 
     }
     private void runThreadTracking() {
+        cameraKitView.takeVideo(new File(getFilesDir(), "video.mp4"));
+
+
       /*  threadControl = new Thread(new Runnable() {
             public void run() {
                 do {
@@ -315,12 +324,12 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
     @Override
     protected void onResume() {
         super.onResume();
-        cameraKitView.start();
+
     }
 
     @Override
     protected void onPause() {
-        cameraKitView.stop();
+
         activityStopped = true;
         super.onPause();
     }
@@ -335,12 +344,21 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
     protected void onStart() {
         super.onStart();
         googleApiClient.connect();
+        cameraKitView.open();
+
     }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        //cameraKitView.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        boolean valid = true;
+        for (int grantResult : grantResults) {
+            valid = valid && grantResult == PackageManager.PERMISSION_GRANTED;
+        }
+        if (valid && !cameraKitView.isOpened()) {
+            cameraKitView.open();
+        }
     }
 
     private void statusCheck() {
