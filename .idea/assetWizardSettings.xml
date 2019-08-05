@@ -18,7 +18,7 @@
                                 <PersistentState>
                                   <option name="values">
                                     <map>
-                                      <entry key="url" value="jar:file:/D:/androidstudio/plugins/android/lib/android.jar!/images/material_design_icons/av/ic_fiber_manual_record_black_24dp.xml" />
+                                      <entry key="url" value="jar:file:/D:/androidstudio/plugins/android/lib/android.jar!/images/material_design_icons/av/ic_pause_circle_filled_black_24dp.xml" />
                                     </map>
                                   </option>
                                 </PersistentState>
@@ -28,9 +28,10 @@
                         </option>
                         <option name="values">
                           <map>
-                            <entry key="color" value="ff100c" />
-                            <entry key="outputName" value="ic_record_dot" />
-                            <entry key="sourceFile" value="D:\car.svg" />
+                            <entry key="assetSourceType" value="FILE" />
+                            <entry key="color" value="ffffff" />
+                            <entry key="outputName" value="ic_destination" />
+                            <entry key="sourceFile" value="C:\Users\Jake\Downloads\destination.svg" />
                           </map>
                         </option>
                       </PersistentState>

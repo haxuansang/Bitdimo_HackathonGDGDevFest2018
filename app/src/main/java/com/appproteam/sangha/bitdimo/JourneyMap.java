@@ -76,14 +76,12 @@ import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
 import com.google.android.exoplayer2.upstream.FileDataSourceFactory;
-import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -101,15 +99,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.maps.GeoApiContext;
 import com.mukesh.tinydb.TinyDB;
-
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.appproteam.sangha.bitdimo.CameraActivity.tinyDB;
-import static com.appproteam.sangha.bitdimo.CameraActivity.uri;
 
 public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMyLocationClickListener, GoogleMap.OnMapClickListener, View.OnClickListener, RoutingListener {
     private static final String TAG = "sangha123";
@@ -125,7 +120,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private long playbackPosition = 0;
     SupportMapFragment mapFragment;
     GeoApiContext geoApiContext;
-    final String vidAddress = "https://firebasestorage.googleapis.com/v0/b/wegoapp-935c3.appspot.com/o/videos%2F111111.mp4?alt=media&token=6eab1849-d2dd-46f0-8370-e94d96362555";
     private SimpleExoPlayer player;
     LocationManager locationManager;
     private GoogleMap mMap;
@@ -133,31 +127,18 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private static final int LOCATION_REQUEST_CODE = 101;
     public static Marker currentMarker;
     public int typeOfView = 0;
-    public String latidude, longtitude;
-    Button btn_submit, btn_getCurentLocation;
-    EditText editTextPlace;
     private Location currentLocation;
     private String currentPlaceName;
     private boolean isFirst = true;
     private List<LatLng> listLatLng = new ArrayList<>();
     private List<LatLng> listRouteLatLng = new ArrayList<>();
     Location location;
-    private Intent mapIntent;
-    private String placeNameToSearch;
-    private ProgressDialog progressDialogMap;
-    private ImageButton btn_choice_view;
-    private LinearLayout bottomSheetDialog;
-    private BottomSheetBehavior bottomSheetBehavior;
-    private ArrayList<Route> mRoute;
     private String currentPlace = "";
-    public static Location choosenLocation;
     Thread threadControl;
     volatile boolean activityStopped = false;
-    LatLng endPoint = new LatLng(16.191078, 108.127618);
     public int i = 0;
     public long lastPositionPlayer = 0;
     public long beginPositionPlayer = 0;
-    public boolean isStoppedThreadGetRoute = false;
     public LatLng mainLocation;
     int count = 0;
     List<Location> listLocation;
@@ -166,6 +147,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private boolean started = false;
     private Handler handler = new Handler();
     int countCallPolyLine=0;
+    private Uri uri;
 
     private Runnable runnable = new Runnable() {
         @Override
@@ -271,6 +253,8 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         player.setPlayWhenReady(playWhenReady);
         player.seekTo(currentWindow, playbackPosition);
      //  Uri newUri = Uri.parse(uri);
+        String uriString = tinyDB.getString("UriVideo");
+        uri = Uri.parse(uriString);
         MediaSource mediaSource = buildMediaSourcec(uri);
         player.prepare(mediaSource, true, false);
     }
@@ -743,7 +727,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
 
     private void animateCameraMap(Location mLocation) {
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 18);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
         mMap.animateCamera(cameraUpdate);
     }
 }
