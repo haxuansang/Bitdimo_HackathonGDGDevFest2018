@@ -20,7 +20,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -28,8 +27,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-
 import com.appproteam.sangha.bitdimo.Utils.MyLocation;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -41,14 +38,15 @@ import com.mukesh.tinydb.TinyDB;
 import com.wonderkiln.camerakit.CameraKitEventListenerAdapter;
 import com.wonderkiln.camerakit.CameraKitVideo;
 import com.wonderkiln.camerakit.CameraView;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
 
-
 public class CameraActivity extends AppCompatActivity implements GoogleApiClient.OnConnectionFailedListener,
         GoogleApiClient.ConnectionCallbacks{
+    private KalmanLatLong kalmanFilter;
+    private long runStartTimeInMillis;
+    private static final int TIMEREQUESTLOCATION = 1 ;
     int countmain = 0;
     boolean isFirstTime = true;
     private Uri uri;
@@ -56,42 +54,33 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            if(isFirstTime) {
-                progress.dismiss();
-                isFirstTime=false;
-                runThreadTracking();
-                imvRecord.setVisibility(View.VISIBLE);
-                btnRecording.setBackgroundResource(R.drawable.ic_stop_record_24dp);
-                Log.d(TAG, "First Time: "+ location.getLatitude() +"\t" + location.getLongitude() +"\t" +time);
-                list.add(location);
-                listTime.add(time);
-                countmain++;
-
+            Log.d(TAG, "onLocationChanged: "+location.getAccuracy());
+            if (location.getAccuracy() <= MINIUM_ACCURACY && location.getAccuracy()>0) {
+                if (lastKnownLocation == null || lastKnownLocation.distanceTo(location) > MIN_DISPLACEMENT) {
+                    if (isFirstTime) {
+                        progress.dismiss();
+                        isFirstTime = false;
+                        runThreadTracking();
+                        imvRecord.setVisibility(View.VISIBLE);
+                        btnRecording.setBackgroundResource(R.drawable.ic_stop_record_24dp);
+                        Log.d(TAG, "First Time: " + location.getLatitude() + "\t" + location.getLongitude() + "\t" + time);
+                        countmain++;
+                    }
+                    else {
+                        Log.d(TAG, "onLocationChanged: " + location.getLatitude() + "\t" + location.getLongitude() + "\t" + time);
+                        Toast.makeText(CameraActivity.this, "got " + ++countmain + " location at "+time, Toast.LENGTH_SHORT).show();
+                    }
+                    list.add(location);
+                    listTime.add(location.getTime());
+                    lastKnownLocation = location;
+                }
             }
-            else {
-                Log.d(TAG, "onLocationChanged: " + location.getLatitude() + "\t" + location.getLongitude() + "\t" + time);
-                Toast.makeText(CameraActivity.this, "got "+ ++countmain +" location" , Toast.LENGTH_SHORT).show();
-            }
-
-
-        }
-    };
-    MyLocation.LocationResult locationResult = new MyLocation.LocationResult() {
-        @Override
-        public void gotLocation(Location location) {
-            firstLocation = location;
-            long beginTime = 0;
-            listTime.add(beginTime);
-            list.add(location);
-            Log.e(TAG, "gotLocation: " + location.getLatitude() + "\t" + location.getLongitude());
-            Toast.makeText(CameraActivity.this, "You got first location. You can record video right now!", Toast.LENGTH_SHORT).show();
-            btnRecording.setOnClickListener(recordListener);
-            progress.dismiss();
         }
     };
     private LocationRequest locationRequest;
-    private static final float MIN_DISPLACEMENT = 1;
-    private static final int LOCATION_REQUEST_CODE = 101;
+    private static final float MIN_DISPLACEMENT = 10;
+    private static final float MINIUM_ACCURACY = 14;
+    private Location lastKnownLocation;
     private GoogleApiClient googleApiClient;
     private boolean isConnected;
     public static final String LOGTAG = "VIDEOCAPTURE";
@@ -114,8 +103,6 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
     int second = 0;
     ImageView imvRecord;
     ProgressDialog progress;
-
-
     View.OnClickListener recordListener = new View.OnClickListener() {
         @SuppressLint("MissingPermission")
         @Override
@@ -164,6 +151,7 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_camera);
+        kalmanFilter = new KalmanLatLong(3);
         tinyDB = new TinyDB(this);
         setContentView(R.layout.activity_camera);
         googleApiClient = new GoogleApiClient.Builder(this)
@@ -171,29 +159,28 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-
         locationRequest = new LocationRequest();
-        locationRequest.setSmallestDisplacement(MIN_DISPLACEMENT);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        locationRequest.setInterval(2000);
+        locationRequest.setSmallestDisplacement(0);
+        locationRequest.setFastestInterval(0);
+        locationRequest.setInterval(0);
         btnRecording = (ImageButton) findViewById(R.id.btn_record);
         btnRecording = (ImageButton) findViewById(R.id.btn_record);
         imvRecord = findViewById(R.id.dotRecord);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ) {
-                requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+            if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED || checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
+                    checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{Manifest.permission.CAMERA, Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
             }
         }
         btnRecording.setOnClickListener(recordListener);
         cameraKitView = findViewById(R.id.camera);
         tv_duration = findViewById(R.id.tv_duration);
         imvMoveJourney  = findViewById(R.id.imv_move_journey);
-
         progress = new ProgressDialog(this);
         progress.setTitle("Loading");
-        progress.setMessage("Wait while loading...");
+        progress.setMessage("Wait while get location...");
         progress.setCancelable(false); // disable dismiss by tapping outside of the dialog
-
         cameraKitView.addCameraKitListener(new CameraKitEventListenerAdapter() {
             @Override
             public void onVideo(CameraKitVideo video) {
@@ -210,8 +197,6 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
                 moveJourney();
             }
         });
-
-
     }
 
     private void moveJourney() {
@@ -226,11 +211,9 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
         values.put(MediaStore.Video.Media.DATA, videoFile.getAbsolutePath());
         getContentResolver().insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
-
     }
     private void runThreadTracking() {
         cameraKitView.captureVideo();
-
         threadTimeCounter = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -323,7 +306,6 @@ public class CameraActivity extends AppCompatActivity implements GoogleApiClient
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         isConnected = true;
-
     }
 
     @Override

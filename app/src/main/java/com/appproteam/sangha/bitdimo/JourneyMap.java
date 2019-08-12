@@ -1,6 +1,7 @@
 package com.appproteam.sangha.bitdimo;
 
 import android.Manifest;
+import android.accessibilityservice.AccessibilityService;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
@@ -12,6 +13,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.location.Address;
 import android.location.Geocoder;
@@ -72,6 +74,7 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.TrackGroupArray;
 import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
+import com.google.android.exoplayer2.ui.PlaybackControlView;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
@@ -82,7 +85,10 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -99,6 +105,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.google.maps.GeoApiContext;
 import com.mukesh.tinydb.TinyDB;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -106,7 +113,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMyLocationClickListener, GoogleMap.OnMapClickListener, View.OnClickListener, RoutingListener {
+public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback{
     private static final String TAG = "sangha123";
     private StorageReference mStorageRef;
     private static final int REQUEST_TAKE_GALLERY_VIDEO = 1111;
@@ -115,6 +122,7 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     MediaController mediaController;
     SeekBar seekBar;
     private PlayerView playerView;
+    private BitmapDescriptor userPositionMarkerBitmapDescriptor;
     private boolean playWhenReady;
     private int currentWindow = 0;
     private long playbackPosition = 0;
@@ -127,52 +135,27 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     private static final int LOCATION_REQUEST_CODE = 101;
     public static Marker currentMarker;
     public int typeOfView = 0;
-    private Location currentLocation;
-    private String currentPlaceName;
     private boolean isFirst = true;
     private List<LatLng> listLatLng = new ArrayList<>();
     private List<LatLng> listRouteLatLng = new ArrayList<>();
     Location location;
-    private String currentPlace = "";
-    Thread threadControl;
     volatile boolean activityStopped = false;
+    volatile boolean isTracking = false;
+    volatile boolean isSeeking = false;
     public int i = 0;
-    public long lastPositionPlayer = 0;
-    public long beginPositionPlayer = 0;
-    public LatLng mainLocation;
     int count = 0;
     List<Location> listLocation;
     List<Long> listTime;
     TinyDB tinyDB;
     private boolean started = false;
     private Handler handler = new Handler();
-    int countCallPolyLine=0;
+    int countCallPolyLine = 0;
     private Uri uri;
+    private Marker userPositionMarker;
 
-    private Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            if(!activityStopped && countCallPolyLine==0) {
-                addPolylineGPS(listRouteLatLng);
-               // bikeRunning();
-                stop();
-            }
-            if(started) {
-                startChecking();
-            }
-        }
-    };
-
-    public void stop() {
-        started = false;
-        handler.removeCallbacks(runnable);
-    }
-
-    public void startChecking() {
-        started = true;
-        handler.postDelayed(runnable, 1000);
-    }
     private static final int[] COLORS = new int[]{R.color.colorPrimaryDark, R.color.colorPrimary, R.color.primary_material_light_1, R.color.accent, R.color.primary_dark_material_light};
+    private Circle locationAccuracyCircle;
+    private boolean mExoPlayerFullscreen = false;
 
     private MediaSource buildMediaSource(Uri uri) {
         return new ExtractorMediaSource.Factory(
@@ -184,9 +167,8 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         player = ExoPlayerFactory.newSimpleInstance(
                 new DefaultRenderersFactory(this),
                 new DefaultTrackSelector(), new DefaultLoadControl());
-        if(listLatLng.size()>1 && listTime.size()>1) {
-            updateVideoBar();
-        }
+
+
         player.addListener(new Player.EventListener() {
             @Override
             public void onTimelineChanged(Timeline timeline, Object manifest, int reason) {
@@ -206,16 +188,14 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
             @Override
             public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
 
-                if (playbackState == ExoPlayer.STATE_ENDED) {
-                    Log.e(TAG, "onPlayerStateChanged: 1");
-                    player.seekTo(0);
-                    player.setPlayWhenReady(true);
-
+                if (playWhenReady && playbackState == ExoPlayer.STATE_READY) {
+                    isTracking = true;
                 } else if (playbackState == ExoPlayer.STATE_BUFFERING) {
-                    Log.e(TAG, "onPlayerStateChanged: 2");
-                    Toast.makeText(getApplicationContext(), "Buffering..", Toast.LENGTH_SHORT).show();
-                } else if (playbackState == ExoPlayer.STATE_READY) {
-                    Log.e(TAG, "onPlayerStateChanged: 3");
+                    isTracking = false;
+                    processSeekTracking();
+                    Log.e(TAG, "onPlayerStateChanged: buffer." );
+                } else {
+                    isTracking = false;
                 }
             }
 
@@ -252,11 +232,24 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         playerView.setPlayer(player);
         player.setPlayWhenReady(playWhenReady);
         player.seekTo(currentWindow, playbackPosition);
-     //  Uri newUri = Uri.parse(uri);
+        //  Uri newUri = Uri.parse(uri);
         String uriString = tinyDB.getString("UriVideo");
         uri = Uri.parse(uriString);
         MediaSource mediaSource = buildMediaSourcec(uri);
         player.prepare(mediaSource, true, false);
+
+    }
+    private void processSeekTracking() {
+        count = 0;
+        long time = player.getCurrentPosition();
+        while (time > listTime.get(count)) {
+            count++;
+        }
+        if(count>0) {
+            count--;
+        }
+        isTracking = true;
+
     }
 
     private MediaSource buildMediaSourcec(Uri uri) {
@@ -265,16 +258,6 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
                 new DefaultExtractorsFactory(), null, null);
     }
 
-    private void callPolyline(LatLng start, LatLng endPoint) {
-        Log.d(TAG, "callPolyline: " +start.latitude +"\t"+start.longitude +"\t"+endPoint.latitude+"\t"+endPoint.longitude);
-        Routing routing = new Routing.Builder().key("AIzaSyC1rU8F0fBtYFA3Vsj28v3w_025sLGHX0I")
-                .travelMode(AbstractRouting.TravelMode.DRIVING)
-                .withListener(this)
-                .alternativeRoutes(true)
-                .waypoints(start, endPoint)
-                .build();
-        routing.execute();
-    }
 
     @Override
     protected void onStart() {
@@ -379,15 +362,17 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
         String listLocationString = this.tinyDB.getString("ListLocation");
 
         String listTimeString = this.tinyDB.getString("ListTime");
-        Type type = new TypeToken<List<Location>>(){}.getType();
-        Type typeTime = new TypeToken<List<Long>>(){}.getType();
+        Type type = new TypeToken<List<Location>>() {
+        }.getType();
+        Type typeTime = new TypeToken<List<Long>>() {
+        }.getType();
         Gson gson = new Gson();
         listLocation = gson.fromJson(listLocationString, type);
         for (Location location : listLocation) {
-            Log.d(TAG, "onCreate: "+ location.getLatitude()+ "\t" + location.getLongitude());
+            Log.d(TAG, "onCreate: " + location.getLatitude() + "\t" + location.getLongitude());
         }
         gson = new Gson();
-        listTime = gson.fromJson(listTimeString,typeTime);
+        listTime = gson.fromJson(listTimeString, typeTime);
         Log.d(TAG, "onCreate: " + listLocation.size() + "\t" + listTime.size());
         //Toast.makeText(this, "" + listLocation.size() + "\t" + listTime.size(), Toast.LENGTH_SHORT).show();
         createListLocation();
@@ -417,95 +402,89 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     }
 
     private void createListLocation() {
-        for (Location location: listLocation){
-            listLatLng.add(new LatLng(location.getLatitude(),location.getLongitude()));
+        for (Location location : listLocation) {
+            listLatLng.add(new LatLng(location.getLatitude(), location.getLongitude()));
         }
 
     }
 
     private void bikeRunning() {
-        MarkerOptions markerOptions = new MarkerOptions().position(listLatLng.get(0)).title(currentPlace);
-        currentMarker = mMap.addMarker(markerOptions);
-        Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.carmarker);
-        currentMarker.setIcon(BitmapDescriptorFactory.fromBitmap(ResizeBitmap.getScaledDownBitmap(bitmap, 170, true)));
-        final ArrayList<GPSMarkerDetect> list = GPSMarkerSingleton.getInstance().getGpsMarkerDetect();
-
-        if (count > 0) {
-            count = 0;
-        }
         new Thread(new Runnable() {
             @Override
             public void run() {
                 do {
-                    final GPSMarkerDetect gpsMarkerDetect = list.get(count);
-                    final List<LatLng> listLat = gpsMarkerDetect.getListMarkerDetect();
-                    long timedelaya = (gpsMarkerDetect.getEndPositionPlayer() - gpsMarkerDetect.getStartPositionPlayer()) / listLat.size();
-                    for (final LatLng latLng : listLat) {
-                        SystemClock.sleep(timedelaya);
+                    if (isTracking) {
+                        Location location = listLocation.get(count);
+                        long firstTime = listTime.get(count);
+                        long secondTime = listTime.get(++count);
+                        long timedelaya = 0;
+                        if (isTracking) {
+                            timedelaya = secondTime - listTime.get(0) - player.getCurrentPosition();
+                        } else {
+                            timedelaya = (secondTime - firstTime);
+                        }
+                        if (timedelaya > 0) {
+                            SystemClock.sleep(timedelaya);
+                        }
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                AddToMap(latLng);
+                                drawLocationAccuracyCircle(location);
+                                drawUserPositionMarker(location);
+                                animateCameraMap(location);
                             }
                         });
                     }
-                    count++;
+
                 }
-                while (count < list.size());
+                while (count < listTime.size() - 1);
             }
         }).start();
 
     }
 
+    private void drawUserPositionMarker(Location location) {
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+
+        if (this.userPositionMarkerBitmapDescriptor == null) {
+            userPositionMarkerBitmapDescriptor = BitmapDescriptorFactory.fromResource(R.drawable.ic_circular_shape);
+        }
+
+        if (userPositionMarker == null) {
+            userPositionMarker = mMap.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .flat(true)
+                    .anchor(0.5f, 0.5f)
+                    .icon(this.userPositionMarkerBitmapDescriptor));
+        } else {
+            userPositionMarker.setPosition(latLng);
+        }
+    }
+
+    private void drawLocationAccuracyCircle(Location location) {
+        Log.d(TAG, "drawLocationAccuracyCircle: " + location.getAccuracy());
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        if (this.locationAccuracyCircle == null) {
+            this.locationAccuracyCircle = mMap.addCircle(new CircleOptions()
+                    .center(latLng)
+                    .fillColor(Color.argb(64, 0, 0, 0))
+                    .strokeColor(Color.argb(64, 0, 0, 0))
+                    .strokeWidth(0.0f)
+                    .radius(location.getAccuracy())); //set readius to horizonal accuracy in meter.
+        } else {
+            this.locationAccuracyCircle.setCenter(latLng);
+        }
+    }
+
 
     private void updateVideoBar() {
 
-        threadControl = new Thread(new Runnable() {
-            public void run() {
-                do {
-                    if (!activityStopped /*&& player.getCurrentPosition() != 0*/)
-                        playerView.post(new Runnable() {
-                            public void run() {
+        addPolylineGPS2(listLatLng);
+        drawUserPositionMarker(listLocation.get(0));
+        drawLocationAccuracyCircle(listLocation.get(0));
+        bikeRunning();
 
-                                LatLng currentMarker = listLatLng.get(i);
-                                LatLng endMarker = listLatLng.get(i + 1);
-                                Log.d(TAG, "testmarker: " +currentMarker.latitude +"\t"+currentMarker.longitude +"\t"+endMarker.latitude+"\t"+endMarker.longitude);
 
-                                mainLocation = endMarker;
-                                beginPositionPlayer = listTime.get(i);
-                                lastPositionPlayer = listTime.get(i+1);
-                                if (currentMarker.latitude!=endMarker.latitude || currentMarker.longitude!=endMarker.longitude) {
-                                    countCallPolyLine++;
-                                    callPolyline(currentMarker, endMarker);
-                                    activityStopped = true;
-                                    Log.d(TAG, "count route"+ countCallPolyLine);
-                                }
-                                i++;
-                                if(i>=listLocation.size()-2 && countCallPolyLine==0){
-                                    if (!activityStopped) {
-                                        addPolylineGPS(listRouteLatLng);
-                                       // bikeRunning();
-                                    }
-                                    else {
-                                        receiveRoute();
-                                    }
-                                }
-                            }
-                        });
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-                while (true && i < listLatLng.size()-2);
-            }
-        });
-        threadControl.start();
-    }
-
-    private void receiveRoute() {
-        startChecking();
     }
 
     private void chooseVideo() {
@@ -560,170 +539,29 @@ public class JourneyMap extends AppCompatActivity implements OnMapReadyCallback,
     }
 
 
-    public String getPath(Uri uri) {
-        String[] projection = {MediaStore.Video.Media.DATA};
-        Cursor cursor = getContentResolver().query(uri, projection, null, null, null);
-        if (cursor != null) {
-            // HERE YOU WILL GET A NULLPOINTER IF CURSOR IS NULL
-            // THIS CAN BE, IF YOU USED OI FILE MANAGER FOR PICKING THE MEDIA
-            int column_index = cursor
-                    .getColumnIndexOrThrow(MediaStore.Video.Media.DATA);
-            cursor.moveToFirst();
-            return cursor.getString(column_index);
-        } else
-            return null;
-    }
 
-    private void AddToMap(final LatLng latLng) {
-
-        //Fetching the last known location using the Fus
-
-        //MarkerOptions are used to create a new Marker.You can specify location, title etc with MarkerOptions
-        currentMarker.setPosition(latLng);
-
-//        editTextPlace.setText(getPlacename(location));
-    }
-
-
-    private String getPlacename(Location location) {
-        Geocoder myLocation = new Geocoder(getBaseContext(), Locale.getDefault());
-        List<Address> myList = null;
-        try {
-            myList = myLocation.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Address address = (Address) myList.get(0);
-        String addressStr = "";
-        addressStr += address.getAddressLine(0) + ", ";
-        addressStr += address.getAddressLine(1) + ", ";
-        addressStr += address.getAddressLine(2);
-        String main = addressStr;
-        Log.d("maps", "getPlacename: " + addressStr.indexOf("null"));
-        if (addressStr.indexOf("null") > 0 && addressStr.indexOf("null") < addressStr.length()) {
-            main = addressStr.substring(0, addressStr.indexOf("null") - 2);
-        }
-        currentPlaceName = main;
-        return main;
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        this.currentLocation = location;
-        if (typeOfView == 0) {
-            MarkerOptions markerOptions = new MarkerOptions().position(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude())).title("Vị trí của bạn");
-            currentMarker = mMap.addMarker(markerOptions);
-        } else {
-            animateCameraMap(location);
-            // AddToMap(location);
-        }
-
-        Log.d("sangha", "locationaaaa: " + location.getLongitude() + "\t" + location.getLatitude());
-        //   drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
-        locationManager.removeUpdates(this);
-
-    }
-
-    @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) {
-
-    }
-
-    @Override
-    public void onProviderEnabled(String s) {
-
-    }
-
-    @Override
-    public void onProviderDisabled(String s) {
-
-    }
-
-    @Override
-    public void onClick(View view) {
-
-    }
-
-    @Override
-    public void onRoutingFailure(RouteException e) {
-        Log.d(TAG, "onRoutingFailure: "+e);
-    }
-
-    @Override
-    public void onRoutingStart() {
-
-    }
-
-    @Override
-    public void onRoutingSuccess(ArrayList<Route> arrayList, int i) {
-       GPSMarkerDetect gpsMarkerDetect = new GPSMarkerDetect(beginPositionPlayer, lastPositionPlayer, arrayList.get(0).getPoints(), mainLocation);
-        if (gpsMarkerDetect != null)
-              GPSMarkerSingleton.getInstance().insertGpsMarkerDetect(gpsMarkerDetect);
-       //addPolylineGPS(arrayList.get(0).getPoints());
-        countCallPolyLine--;
-        Log.d(TAG, "onRoutingSuccess: " + this.i);
-        listRouteLatLng.addAll(arrayList.get(0).getPoints());
-        activityStopped = false;
-        Log.d(TAG, "route khi tru di"+ countCallPolyLine);
-
-        //addPolylineGPS(arrayList.get(0).getPoints());
-    }
-
-    @Override
-    public void onRoutingCancelled() {
-
-    }
-
-    @Override
-    public void onMapClick(LatLng latLng) {
-
-    }
-
-    @Override
-    public void onMyLocationClick(@NonNull Location location) {
-
-    }
 
     @SuppressLint("MissingPermission")
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-       /* if (location == null) {
-            Log.d("sangha", "locationb");
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 400, 10, this);
-        } else {
-            Log.d("sangha", "locationa: " + location.getLongitude() + "\t" + location.getLatitude());
-
+        if (listLocation.size()>0) {
+            Location location = listLocation.get(0);
             animateCameraMap(location);
-            AddToMap(location);
-
-        }*/
-/*        MyLocation.LocationResult locationResult = new MyLocation.LocationResult(){
-            @Override
-            public void gotLocation(Location location){
-                Log.e(TAG, "gotLocation: "+ location.getLatitude() +"\t" + location.getLongitude() );
-                drawPolyline(new LatLng(location.getLatitude(),location.getLongitude()));
-
-            }
-        };
-        MyLocation myLocation = new MyLocation();
-        myLocation.getLocation(this, locationResult);
-        */
-        Location location = listLocation.get(0);
-        animateCameraMap(location);
+            updateVideoBar();
+        }
 
     }
 
-    private void addPolylineGPS(List<LatLng> list) {
-
-        int i = 0;
+    private void addPolylineGPS2(List<LatLng> list) {
         //In case of more than 5 alternative routes
         PolylineOptions polyOptions = new PolylineOptions();
         polyOptions.color(getResources().getColor(COLORS[0]));
-        polyOptions.width(10 + i * 3);
+        polyOptions.width(20);
         polyOptions.addAll(list);
         mMap.addPolyline(polyOptions);
     }
+
 
     private void animateCameraMap(Location mLocation) {
         LatLng latLng = new LatLng(mLocation.getLatitude(), mLocation.getLongitude());
